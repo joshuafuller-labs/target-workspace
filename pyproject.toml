@@ -34,7 +34,7 @@ dependencies = [
     "Authlib==1.7.2",
     "cryptography>=48.0.0,<51",
     # Logging + observability
-    "structlog>=25.5.0,<26",
+    "structlog>=25.5.0,<27",
     "opentelemetry-api>=1.41.1,<1.42",
     "opentelemetry-sdk>=1.41.1,<1.42",
     "opentelemetry-exporter-otlp>=1.41.1,<1.42",
