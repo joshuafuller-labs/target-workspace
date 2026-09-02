@@ -2,6 +2,9 @@
 
 **A CoT-native, configurable kanban for the target lifecycle.** One engine; many domains. Ingest from any source (TAK / CoT, OSINT feeds, AI/ATR pipelines, manual entry), drive cards through a workspace-defined workflow with signed audit, publish to TAK Server or any CoT consumer.
 
+> [!IMPORTANT]
+> **Early prototype:** This project is still raw and exploratory. It demonstrates a possible approach to map-linked operational tasking, but its workflows, interfaces, and deployment model are not yet ready for operational use. Feedback, field experience, and contributions are welcome.
+
 ![F3EAD board — tactical theme, populated with the bundled tf-dagger scenario](docs/screenshots/01-f3ead.png)
 
 ## Why this exists
