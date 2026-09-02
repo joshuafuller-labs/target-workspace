@@ -1,0 +1,62 @@
+name: Semgrep (SAST)
+
+# Replaces CodeQL. GitHub code-scanning requires Advanced Security, which isn't
+# available on this private repo in a free org (POST /code-scanning → 403). Semgrep
+# runs fully self-contained — no SARIF upload, no GHAS — and blocks the build on
+# ERROR-severity findings. Reviewed exceptions are marked inline with `# nosemgrep`.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+  schedule:
+    - cron: "0 7 * * 1" # Mondays 07:00 UTC
+
+permissions:
+  contents: read
+
+concurrency:
+  group: semgrep-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  semgrep:
+    name: Semgrep SAST
+    runs-on: arc-homelab-runner
+    timeout-minutes: 15
+
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.11.14"
+
+      # Blocking SAST on ERROR-severity findings only (high confidence/severity),
+      # across the Python backend and the TS frontend source.
+      - name: Semgrep SAST
+        run: >-
+          uvx --from "semgrep==1.163.0" semgrep scan
+          --config p/security-audit
+          --config p/secrets
+          --config p/owasp-top-ten
+          --severity ERROR
+          --error
+          --quiet
+          src frontend/src

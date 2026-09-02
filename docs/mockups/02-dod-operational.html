@@ -1,0 +1,859 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Target Workspace — DoD Operational (Mockup)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Major+Mono+Display&family=Sora:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #060e15;
+    --bg-2: #0a141d;
+    --panel: #0d1a26;
+    --panel-2: #122231;
+    --line: #1a2f44;
+    --line-2: #2b4c6c;
+    --ink: #eef0e6;
+    --ink-dim: #8ea3b6;
+    --ink-faint: #5e7689;
+    --amber: #f0b73d;
+    --amber-2: #ffd47a;
+    --amber-dim: #8a6720;
+    --hostile: #e84a3b;
+    --hostile-2: #ff6f5e;
+    --friendly: #5fa9d6;
+    --neutral: #d4af37;
+    --unknown: #9aa3a8;
+    --good: #4ab87a;
+    --warn: #f0b73d;
+    --bad: #e84a3b;
+    --classif: #c2a02a;
+  }
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Sora', system-ui, sans-serif;
+    font-feature-settings: 'ss01', 'ss02';
+  }
+  body::before {
+    /* faint scanlines for CRT atmosphere */
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 1;
+    background: repeating-linear-gradient(180deg, rgba(255,255,255,0.012) 0 1px, transparent 1px 3px);
+    mix-blend-mode: screen; opacity: 0.6;
+  }
+  body::after {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background: radial-gradient(1200px 600px at 70% 20%, rgba(240,183,61,0.04), transparent 70%),
+                radial-gradient(900px 500px at 10% 80%, rgba(95,169,214,0.04), transparent 60%);
+  }
+  .display { font-family: 'Major Mono Display', ui-monospace, monospace; letter-spacing: 0.02em; }
+  .mono    { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+  .panel   { background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid var(--line); }
+  .panel-2 { background: var(--panel-2); border: 1px solid var(--line); }
+  .hairline { border-color: var(--line); }
+  .hairline-2 { border-color: var(--line-2); }
+  .ink-dim { color: var(--ink-dim); }
+  .ink-faint { color: var(--ink-faint); }
+  .amber { color: var(--amber); }
+
+  /* Classification: stenciled label */
+  .classif-band {
+    background: repeating-linear-gradient(90deg, rgba(194,160,42,0.18) 0 12px, rgba(194,160,42,0.06) 12px 24px);
+    color: var(--amber-2); border-top: 1px solid var(--amber-dim); border-bottom: 1px solid var(--amber-dim);
+    letter-spacing: 0.32em; text-shadow: 0 0 8px rgba(240,183,61,0.4);
+  }
+
+  /* Chips */
+  .chip { display:inline-flex; align-items:center; gap:4px; padding:1px 6px; border-radius:2px; font-size:10px; font-weight:600; line-height:16px; letter-spacing:0.06em; font-family:'IBM Plex Mono', ui-monospace, monospace; }
+  .chip-dim     { background: rgba(255,255,255,0.04); color: var(--ink-dim); border: 1px solid var(--line); }
+  .chip-amber   { background: rgba(240,183,61,0.10); color: var(--amber-2); border: 1px solid rgba(240,183,61,0.40); }
+  .chip-amber-solid { background: var(--amber); color: #0a0a0a; }
+  .chip-hostile { background: rgba(232,74,59,0.15); color: var(--hostile-2); border: 1px solid rgba(232,74,59,0.45); }
+  .chip-friendly{ background: rgba(95,169,214,0.12); color: #9cc7e6; border: 1px solid rgba(95,169,214,0.45); }
+  .chip-good    { background: rgba(74,184,122,0.12); color: #7fd29c; border: 1px solid rgba(74,184,122,0.45); }
+  .chip-warn    { background: rgba(212,167,55,0.10); color: var(--amber-2); border: 1px solid rgba(212,167,55,0.40); }
+  .chip-bad     { background: rgba(232,74,59,0.12); color: var(--hostile-2); border: 1px solid rgba(232,74,59,0.45); }
+
+  /* Sector label */
+  .sectorlabel {
+    font-family: 'Major Mono Display', monospace; font-size: 10px; letter-spacing: 0.42em;
+    color: var(--amber); padding: 4px 10px;
+    border: 1px solid var(--amber-dim); background: rgba(240,183,61,0.04);
+  }
+
+  /* Affiliations */
+  .affil { width:14px; height:14px; display:inline-block; vertical-align:-2px; }
+  .affil-hostile  { background: var(--hostile); transform: rotate(45deg); }
+  .affil-friendly { background: var(--friendly); border-radius: 50%; }
+  .affil-neutral  { background: var(--neutral); }
+  .affil-unknown  { background: var(--unknown); border-radius: 3px; }
+
+  /* Card — tabular */
+  .ops-card {
+    background: linear-gradient(180deg, #102032, #0c1925);
+    border: 1px solid var(--line);
+    border-left: 2px solid var(--line-2);
+    transition: border-color 120ms ease, transform 120ms ease;
+  }
+  .ops-card:hover { border-color: var(--line-2); }
+  .ops-card.urgent { border-left-color: var(--amber); }
+  .ops-card.critical { border-left-color: var(--hostile); animation: pulseborder 2.4s ease-in-out infinite; }
+  @keyframes pulseborder {
+    0%, 100% { box-shadow: inset 1px 0 0 var(--hostile); }
+    50% { box-shadow: inset 3px 0 12px rgba(232,74,59,0.35); }
+  }
+  .ops-row { display: grid; grid-template-columns: 1fr auto; gap: 6px; padding: 4px 8px; border-top: 1px solid rgba(255,255,255,0.04); font-size: 11px; }
+  .ops-row:first-child { border-top: 0; }
+  .ops-row .k { color: var(--ink-faint); letter-spacing: 0.06em; text-transform: uppercase; font-size: 9.5px; font-family: 'Major Mono Display', monospace; padding-top: 2px; }
+  .ops-row .v { color: var(--ink); font-family: 'IBM Plex Mono', monospace; }
+
+  /* Column head */
+  .col-head {
+    background: linear-gradient(180deg, #122131, #0d1925);
+    border: 1px solid var(--line);
+    border-bottom: 0;
+    padding: 8px 10px;
+  }
+  .col-head .num { font-family: 'Major Mono Display', monospace; font-size: 11px; color: var(--amber); letter-spacing: 0.32em; }
+  .col-head .name { font-family: 'Major Mono Display', monospace; font-size: 14px; letter-spacing: 0.16em; color: var(--ink); }
+  .col-body { background: rgba(255,255,255,0.012); border: 1px solid var(--line); border-top: 0; min-height: 60vh; }
+
+  /* Tooltip system */
+  [data-tip] { position: relative; }
+  .tt { position: fixed; z-index: 80; pointer-events: none; max-width: 340px; background: #0a141d; color: var(--ink);
+    border: 1px solid var(--line-2); border-radius: 2px; padding: 9px 11px; font-size: 11px; line-height: 1.5;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.6), 0 0 0 1px rgba(240,183,61,0.06);
+    opacity: 0; transform: translateY(2px); transition: opacity 120ms ease, transform 120ms ease;
+    font-family: 'Sora', sans-serif;
+  }
+  .tt.show { opacity: 1; transform: translateY(0); }
+  .tt .tt-title { color: var(--amber-2); font-weight: 600; font-size: 11px; margin-bottom: 4px; letter-spacing: 0.08em; text-transform: uppercase; font-family: 'IBM Plex Mono', monospace; }
+  .tt .tt-kbd { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--amber); }
+
+  /* Buttons */
+  .btn { display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border-radius:2px; font-size:12px; font-weight:500; border:1px solid var(--line-2); background:#0e1a26; color:var(--ink); font-family:'Sora', sans-serif; }
+  .btn:hover { background:#132438; }
+  .btn-primary { background: var(--amber); border-color: var(--amber-2); color:#0a0a0a; font-weight:600; }
+  .btn-primary:hover { background: var(--amber-2); }
+  .btn-ghost { background:transparent; border-color: var(--line); color: var(--ink-dim); }
+  .btn-danger { background: #2a0f0f; border-color: #6b2828; color: #ffb8b0; }
+  .btn-good { background: #112a1d; border-color: #2f6b48; color: #b6e6c5; }
+
+  .kbd { display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px; padding:0 4px; border:1px solid var(--line-2); border-bottom-width:2px; border-radius:2px; background:#0e1a26; color:var(--ink-dim); font-family:'IBM Plex Mono', monospace; font-size:10px; }
+
+  /* Crosshair COP map */
+  .cop {
+    position: relative;
+    background:
+      radial-gradient(800px 400px at 50% 50%, rgba(240,183,61,0.06), transparent 70%),
+      linear-gradient(rgba(95,169,214,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(95,169,214,0.06) 1px, transparent 1px),
+      linear-gradient(rgba(95,169,214,0.10) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(95,169,214,0.10) 1px, transparent 1px),
+      #07111a;
+    background-size: 100% 100%, 16px 16px, 16px 16px, 96px 96px, 96px 96px;
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .cop .ring {
+    position: absolute; top:50%; left:50%; transform: translate(-50%,-50%);
+    border: 1px dashed rgba(240,183,61,0.35); border-radius: 50%; pointer-events:none;
+  }
+  .cop .pin { position:absolute; transform:translate(-50%,-50%); }
+  .cop .pin .dot { width:8px; height:8px; border-radius:50%; }
+  .cop .pin.hostile  .dot { background: var(--hostile);  box-shadow: 0 0 10px rgba(232,74,59,0.8), 0 0 0 2px rgba(0,0,0,0.5); }
+  .cop .pin.friendly .dot { background: var(--friendly); box-shadow: 0 0 8px rgba(95,169,214,0.6), 0 0 0 2px rgba(0,0,0,0.5); }
+  .cop .pin .label { color: var(--ink); font-family:'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.04em; text-shadow: 0 1px 2px #000; margin-top:2px; white-space: nowrap; }
+
+  /* Battle rhythm bar */
+  .rhythm {
+    height: 56px; position: relative;
+    background: linear-gradient(180deg, #0c1925, #07101a);
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .rhythm .tick { position:absolute; top: 0; bottom: 0; width: 1px; background: var(--line); }
+  .rhythm .tick.major { background: var(--line-2); }
+  .rhythm .label { position:absolute; top: 2px; transform: translateX(-50%); font-family:'IBM Plex Mono', monospace; font-size: 9px; color: var(--ink-faint); }
+  .rhythm .event { position:absolute; bottom: 6px; transform: translateX(-50%); }
+  .rhythm .event .dot { width: 6px; height: 6px; border-radius: 50%; margin: 0 auto; }
+  .rhythm .event .text { font-family:'Sora', sans-serif; font-size: 9px; color: var(--ink-dim); white-space: nowrap; }
+  .rhythm .now { position:absolute; top: 0; bottom: 0; width: 2px; background: var(--amber); box-shadow: 0 0 10px rgba(240,183,61,0.7); }
+
+  /* Approval card mini */
+  .apv {
+    background: linear-gradient(180deg, #1a1108, #0e0a05);
+    border: 1px solid var(--amber-dim);
+    border-left: 2px solid var(--amber);
+  }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #1c3346; border-radius: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  .ic { width: 14px; height: 14px; stroke-width: 1.75; }
+  .ic-lg { width: 18px; height: 18px; stroke-width: 1.75; }
+  a:focus, button:focus, [tabindex]:focus { outline: 1px solid var(--amber); outline-offset: 1px; }
+</style>
+</head>
+<body class="min-h-screen relative">
+
+<!-- Top classification band -->
+<div class="classif-band text-[10px] font-bold text-center py-[4px]">SECRET // REL TO USA, FVEY // DEMONSTRATION DATA — NOT OPERATIONAL</div>
+
+<!-- HEADER -->
+<header class="relative z-10 px-4 py-2.5 border-b hairline-2" style="background: linear-gradient(180deg, #0a141d, #07101a);">
+  <div class="flex items-center gap-5">
+    <!-- Seal -->
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full grid place-items-center"
+           style="background: radial-gradient(circle at 50% 40%, #1a2f44, #07101a); border: 1px solid var(--amber-dim); box-shadow: inset 0 0 12px rgba(240,183,61,0.2);">
+        <span class="display amber text-[11px]">JTF</span>
+      </div>
+      <div class="leading-tight">
+        <div class="display text-[10px] amber" style="letter-spacing: 0.42em;">TARGET WORKSPACE</div>
+        <div class="text-[14px] font-semibold tracking-wide">JTF–22 / J2 TARGETING CELL</div>
+      </div>
+    </div>
+
+    <div class="h-8 w-px border-l hairline-2"></div>
+
+    <nav class="flex items-center gap-1 text-[12px]">
+      <a class="px-2 py-1 amber border-b-2" style="border-color: var(--amber);" href="#">Board</a>
+      <a class="px-2 py-1 ink-dim hover:text-white" href="#">Lists</a>
+      <a class="px-2 py-1 ink-dim hover:text-white" href="#">Approvals <span class="chip chip-amber-solid ml-1">3</span></a>
+      <a class="px-2 py-1 ink-dim hover:text-white" href="#">Audit</a>
+      <a class="px-2 py-1 ink-dim hover:text-white" href="#">Reports</a>
+      <a class="px-2 py-1 ink-dim hover:text-white" href="#">Admin</a>
+    </nav>
+
+    <div class="ml-auto flex items-center gap-2">
+      <div class="sectorlabel" data-tip="op" data-tip-title="Operational context" data-tip-body="OPERATION NORTHERN STAR · Day 12 · JTF-22 AOR (Pacific)">OP · NORTHERN STAR · D+12</div>
+      <div class="sectorlabel mono text-[11px]" style="letter-spacing: 0.18em;" data-tip="dtg" data-tip-title="Current DTG" data-tip-body="Zulu (UTC). All workspace timestamps are Z.">162145Z MAY 26</div>
+
+      <button class="btn btn-ghost mono" data-tip="cmdk" data-tip-title="Command palette" data-tip-body="Jump to target, list, audit entry. Same shortcut from anywhere.">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        Find <span class="kbd ml-1">⌘K</span>
+      </button>
+
+      <div class="flex items-center gap-2 pl-2 border-l hairline-2">
+        <div class="w-9 h-9 rounded grid place-items-center text-[11px] font-bold"
+             style="background: linear-gradient(135deg, #1c3346, #0c1925); color: var(--amber-2); border: 1px solid var(--amber-dim);">BH</div>
+        <div class="leading-tight">
+          <div class="text-[12px] font-semibold">MAJ B. HOLLOWAY</div>
+          <div class="text-[10px] ink-faint mono">OPS-O · BATTLE CPT · TS//SCI</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- SUB-BAR: list + view -->
+<div class="relative z-10 px-4 py-2 border-b hairline flex items-center gap-3 text-[12px]" style="background: var(--bg-2);">
+  <div class="flex items-center gap-1">
+    <span class="ink-faint display text-[10px] mr-2" style="letter-spacing: 0.42em;">LIST</span>
+    <button class="btn btn-primary mono" data-tip="jiptl" data-tip-title="JIPTL — Joint Integrated Prioritized Target List"
+            data-tip-body="The primary prioritized target list at the joint task force level. Cards on this view are JIPTL-bound.">
+      JIPTL <span class="chip chip-dim ml-1">47</span>
+    </button>
+    <button class="btn" data-tip="rtl" data-tip-title="RTL — Restricted Target List" data-tip-body="Targets requiring special authorities or approvals. Read-only without role.">RTL <span class="chip chip-dim ml-1">12</span></button>
+    <button class="btn" data-tip="nsl" data-tip-title="NSL — No-Strike List" data-tip-body="Protected entities (cultural, medical, civilian) — strike prohibited.">NSL <span class="chip chip-dim ml-1">84</span></button>
+    <button class="btn btn-ghost" data-tip="watch" data-tip-title="Watch List" data-tip-body="Items under active monitoring; not yet on JIPTL.">Watch <span class="chip chip-dim ml-1">22</span></button>
+  </div>
+
+  <div class="h-5 w-px border-l hairline"></div>
+
+  <div class="flex items-center gap-1">
+    <span class="ink-faint display text-[10px] mr-2" style="letter-spacing: 0.42em;">VIEW</span>
+    <button class="btn" data-tip="d3a" data-tip-title="D3A targeting cycle" data-tip-body="Decide · Detect · Deliver · Assess (Army FM 3-60, Aug 2023). Default for operational fires planning.">
+      <span class="amber font-semibold">D3A</span>
+    </button>
+    <button class="btn btn-ghost mono">JP 3-60</button>
+    <button class="btn btn-ghost mono">F3EAD</button>
+    <button class="btn btn-ghost mono">F2T2EA</button>
+  </div>
+
+  <div class="h-5 w-px border-l hairline"></div>
+
+  <div class="flex items-center gap-1">
+    <button class="btn btn-ghost" data-tip="prio" data-tip-title="Priority filter" data-tip-body="Filter cards by JIPTL priority bucket.">Prio ≤ 20</button>
+    <button class="btn btn-ghost">Sources <span class="chip chip-dim ml-1">6</span></button>
+    <button class="btn btn-ghost">CDE: any</button>
+  </div>
+
+  <div class="ml-auto flex items-center gap-2">
+    <button class="btn" data-tip="board" data-tip-title="Convene targeting board" data-tip-body="Sends an invite to JTCB members. The selected JIPTL slice becomes the read-out.">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 4h18v6H3zM3 14h18v6H3z"/></svg>
+      Convene JTCB
+    </button>
+    <button class="btn" data-tip="cde" data-tip-title="Run CDE on selection" data-tip-body="Collateral Damage Estimate (CJCSI 3160.01) — pre-fires gate.">Run CDE</button>
+    <button class="btn btn-primary" data-tip="publish" data-tip-title="Publish to TAK Server" data-tip-body="Emits CoT events for all DELIVER-column cards. Audit-logged with actor + DTG.">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m22 2-7 20-4-9-9-4 20-7Z"/></svg>
+      Publish · TAK Server
+    </button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="relative z-10 grid grid-cols-[300px_minmax(0,1fr)_400px] gap-3 px-3 pt-3">
+
+  <!-- LEFT: INTAKE QUEUE -->
+  <aside class="panel flex flex-col">
+    <div class="px-3 py-2 border-b hairline flex items-center justify-between">
+      <div>
+        <div class="display text-[10px] amber" style="letter-spacing: 0.42em;">INTAKE QUEUE</div>
+        <div class="mono text-[11px] ink-dim">6 sources · 41 new · last 12s</div>
+      </div>
+      <span class="chip chip-amber">LIVE</span>
+    </div>
+
+    <div class="px-3 py-2 border-b hairline flex flex-wrap gap-1">
+      <span class="chip chip-amber">DCGS-A</span>
+      <span class="chip chip-amber">NGA</span>
+      <span class="chip chip-amber">NSA SIGINT</span>
+      <span class="chip chip-amber">HUMINT</span>
+      <span class="chip chip-amber">MASINT</span>
+      <span class="chip chip-amber">COCOM TST</span>
+    </div>
+
+    <div class="overflow-y-auto" style="max-height: calc(100vh - 280px);">
+
+      <!-- queue row -->
+      <div class="px-3 py-2 border-b hairline cursor-pointer hover:bg-white/5" data-tip="q1" data-tip-title="NGA GEOINT · imagery delta" data-tip-body="24h delta · NIIRS 5.8 · CE 8m · auto-classified site-type radar">
+        <div class="flex items-center gap-2">
+          <span class="chip chip-amber">NGA</span>
+          <span class="mono text-[10px] ink-faint ml-auto">42s ago</span>
+        </div>
+        <div class="text-[12px] mt-1">Radar site · new mast erected</div>
+        <div class="mono text-[10px] ink-faint mt-0.5">52S MC 87214 42150 · CE 8m</div>
+        <div class="flex items-center gap-2 mt-1.5">
+          <span class="chip chip-warn">REVIEW</span>
+          <span class="mono text-[10px] ink-dim ml-auto">0.88</span>
+        </div>
+      </div>
+
+      <div class="px-3 py-2 border-b hairline cursor-pointer hover:bg-white/5" data-tip="q2" data-tip-title="NSA SIGINT · ELINT cue">
+        <div class="flex items-center gap-2">
+          <span class="chip chip-amber">SIGINT</span>
+          <span class="mono text-[10px] ink-faint ml-auto">2m ago</span>
+        </div>
+        <div class="text-[12px] mt-1">Mobile emitter · S-band sweep</div>
+        <div class="mono text-[10px] ink-faint mt-0.5">52S MC 88040 41210 · LOB ±2°</div>
+        <div class="flex items-center gap-2 mt-1.5">
+          <span class="chip chip-amber">CROSS-CUE</span>
+          <span class="mono text-[10px] ink-dim ml-auto">0.79</span>
+        </div>
+      </div>
+
+      <div class="px-3 py-2 border-b hairline cursor-pointer hover:bg-white/5" data-tip="q3" data-tip-title="DCGS-A · ATR pickup">
+        <div class="flex items-center gap-2">
+          <span class="chip chip-amber">DCGS-A</span>
+          <span class="mono text-[10px] ink-faint ml-auto">5m ago</span>
+        </div>
+        <div class="text-[12px] mt-1">Convoy · 6× wheeled, mvmt NE</div>
+        <div class="mono text-[10px] ink-faint mt-0.5">52S MC 87520 42910 · CE 14m</div>
+        <div class="flex items-center gap-2 mt-1.5">
+          <span class="chip chip-good">AUTO-OK</span>
+          <span class="mono text-[10px] ink-dim ml-auto">0.93</span>
+        </div>
+      </div>
+
+      <div class="px-3 py-2 border-b hairline cursor-pointer hover:bg-white/5" data-tip="q4" data-tip-title="HUMINT · INTREP from HCT-3">
+        <div class="flex items-center gap-2">
+          <span class="chip chip-amber">HUMINT</span>
+          <span class="mono text-[10px] ink-faint ml-auto">11m ago</span>
+        </div>
+        <div class="text-[12px] mt-1">CMD CP suspected at FACILITY-7</div>
+        <div class="mono text-[10px] ink-faint mt-0.5">52S MC 87214 42150 · grade C3</div>
+        <div class="flex items-center gap-2 mt-1.5">
+          <span class="chip chip-warn">GATED</span>
+          <span class="mono text-[10px] ink-dim ml-auto">0.66</span>
+        </div>
+      </div>
+
+      <div class="px-3 py-2 border-b hairline cursor-pointer hover:bg-white/5" data-tip="q5" data-tip-title="MASINT · IR signature">
+        <div class="flex items-center gap-2">
+          <span class="chip chip-amber">MASINT</span>
+          <span class="mono text-[10px] ink-faint ml-auto">17m ago</span>
+        </div>
+        <div class="text-[12px] mt-1">Vehicle plume · cold start</div>
+        <div class="mono text-[10px] ink-faint mt-0.5">52S MC 88412 41040 · CE 110m</div>
+        <div class="flex items-center gap-2 mt-1.5">
+          <span class="chip chip-warn">QUEUED</span>
+          <span class="mono text-[10px] ink-dim ml-auto">0.58</span>
+        </div>
+      </div>
+
+      <div class="px-3 py-2 border-b hairline cursor-pointer hover:bg-white/5" data-tip="q6" data-tip-title="COCOM TST cue">
+        <div class="flex items-center gap-2">
+          <span class="chip chip-amber">TST</span>
+          <span class="mono text-[10px] ink-faint ml-auto">23m ago</span>
+        </div>
+        <div class="text-[12px] mt-1">TST nomination · launcher</div>
+        <div class="mono text-[10px] ink-faint mt-0.5">52S MC 87802 42440 · WIN 14m</div>
+        <div class="flex items-center gap-2 mt-1.5">
+          <span class="chip chip-bad">EXPEDITE</span>
+          <span class="mono text-[10px] ink-dim ml-auto">0.84</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Policy summary -->
+    <div class="border-t hairline px-3 py-2 text-[11px] space-y-1">
+      <div class="flex items-center justify-between"><span class="ink-dim display text-[9px]" style="letter-spacing: 0.32em;">POLICY</span><span class="mono text-white">CONDITIONAL ≥ 0.85</span></div>
+      <div class="flex items-center justify-between"><span class="ink-dim display text-[9px]" style="letter-spacing: 0.32em;">HITL GATE</span><span class="mono">FINISH · OPS-O+</span></div>
+      <div class="flex items-center justify-between"><span class="ink-dim display text-[9px]" style="letter-spacing: 0.32em;">AUDIT</span><span class="mono text-white">APPEND-ONLY</span></div>
+    </div>
+  </aside>
+
+  <!-- CENTER: D3A board -->
+  <section>
+    <div class="grid grid-cols-4 gap-3">
+
+      <!-- DECIDE -->
+      <div>
+        <div class="col-head flex items-center justify-between" data-tip="col-decide" data-tip-title="DECIDE · D3A/1"
+             data-tip-body="Target development. Cell identifies HVT/HPTL candidates. Output: nominations to JIPTL.">
+          <div>
+            <div class="num">D3A · 01</div>
+            <div class="name">DECIDE</div>
+          </div>
+          <span class="chip chip-dim mono">14</span>
+        </div>
+        <div class="col-body p-2 space-y-2">
+
+          <!-- Card -->
+          <article class="ops-card urgent" data-tip="t1247" data-tip-title="TGT-NR-1247 · Command post"
+                   data-tip-body="POLARIS-CMD · suspected enemy CMD CP at FACILITY-7. HUMINT + GEOINT corroborated.">
+            <div class="px-2 py-1.5 flex items-center justify-between border-b hairline">
+              <div class="flex items-center gap-2">
+                <span class="affil affil-hostile"></span>
+                <span class="mono text-[11px] font-semibold">TGT-NR-1247</span>
+              </div>
+              <span class="chip chip-amber">JIPTL #4</span>
+            </div>
+            <div class="ops-row"><span class="k">CALL</span><span class="v">POLARIS-CMD</span></div>
+            <div class="ops-row"><span class="k">TYPE</span><span class="v">CMD POST · STATIC</span></div>
+            <div class="ops-row"><span class="k">MGRS</span><span class="v">52S MC 87214 42150</span></div>
+            <div class="ops-row"><span class="k">CE/LE</span><span class="v">8m / 12m</span></div>
+            <div class="ops-row"><span class="k">SRC</span><span class="v">NGA · HUMINT · SIGINT <span class="ink-faint">(3)</span></span></div>
+            <div class="ops-row"><span class="k">CDE</span><span class="v">LV 2 · IN PROG</span></div>
+            <div class="ops-row"><span class="k">ANALYST</span><span class="v">A. MEHTA · J2T</span></div>
+          </article>
+
+          <article class="ops-card" data-tip="t1262" data-tip-title="TGT-NR-1262 · Mobile launcher">
+            <div class="px-2 py-1.5 flex items-center justify-between border-b hairline">
+              <div class="flex items-center gap-2">
+                <span class="affil affil-hostile"></span>
+                <span class="mono text-[11px] font-semibold">TGT-NR-1262</span>
+              </div>
+              <span class="chip chip-amber">JIPTL #11</span>
+            </div>
+            <div class="ops-row"><span class="k">CALL</span><span class="v">VEGA-MOB</span></div>
+            <div class="ops-row"><span class="k">TYPE</span><span class="v">SRBM TEL · MOBILE</span></div>
+            <div class="ops-row"><span class="k">LKP</span><span class="v">52S MC 88040 41210</span></div>
+            <div class="ops-row"><span class="k">SRC</span><span class="v">SIGINT · MASINT <span class="ink-faint">(2)</span></span></div>
+            <div class="ops-row"><span class="k">CDE</span><span class="v">LV 1 · PASS</span></div>
+            <div class="ops-row"><span class="k">ANALYST</span><span class="v">A. MEHTA · J2T</span></div>
+          </article>
+
+          <article class="ops-card" data-tip="t1273" data-tip-title="TGT-NR-1273 · Logistics node">
+            <div class="px-2 py-1.5 flex items-center justify-between border-b hairline">
+              <div class="flex items-center gap-2">
+                <span class="affil affil-hostile"></span>
+                <span class="mono text-[11px] font-semibold">TGT-NR-1273</span>
+              </div>
+              <span class="chip chip-dim">JIPTL #19</span>
+            </div>
+            <div class="ops-row"><span class="k">CALL</span><span class="v">DENEB-LOG</span></div>
+            <div class="ops-row"><span class="k">TYPE</span><span class="v">FUEL DEPOT</span></div>
+            <div class="ops-row"><span class="k">MGRS</span><span class="v">52S MC 87802 42440</span></div>
+            <div class="ops-row"><span class="k">SRC</span><span class="v">NGA <span class="ink-faint">(1)</span></span></div>
+            <div class="ops-row"><span class="k">CDE</span><span class="v">LV 3 · REQ NSL CHK</span></div>
+          </article>
+
+        </div>
+      </div>
+
+      <!-- DETECT -->
+      <div>
+        <div class="col-head flex items-center justify-between" data-tip="col-detect" data-tip-title="DETECT · D3A/2"
+             data-tip-body="Targets under ISR collection / observation. Cross-cue from sensors confirms fix.">
+          <div>
+            <div class="num">D3A · 02</div>
+            <div class="name">DETECT</div>
+          </div>
+          <span class="chip chip-dim mono">9</span>
+        </div>
+        <div class="col-body p-2 space-y-2">
+
+          <article class="ops-card urgent" data-tip="t1284" data-tip-title="TGT-NR-1284 · Radar (Detect)">
+            <div class="px-2 py-1.5 flex items-center justify-between border-b hairline">
+              <div class="flex items-center gap-2">
+                <span class="affil affil-hostile"></span>
+                <span class="mono text-[11px] font-semibold">TGT-NR-1284</span>
+              </div>
+              <span class="chip chip-amber">JIPTL #2</span>
+            </div>
+            <div class="ops-row"><span class="k">CALL</span><span class="v">SIRIUS-RAD</span></div>
+            <div class="ops-row"><span class="k">TYPE</span><span class="v">EW RADAR · S-BAND</span></div>
+            <div class="ops-row"><span class="k">MGRS</span><span class="v">52S MC 86990 42830</span></div>
+            <div class="ops-row"><span class="k">ISR</span><span class="v">MQ-9 · ON-STA <span class="amber">42 MIN</span></span></div>
+            <div class="ops-row"><span class="k">SRC</span><span class="v">SIGINT · NGA · MASINT <span class="ink-faint">(3)</span></span></div>
+            <div class="ops-row"><span class="k">CDE</span><span class="v">LV 2 · PASS</span></div>
+          </article>
+
+          <article class="ops-card" data-tip="t1290" data-tip-title="TGT-NR-1290 · AAA site">
+            <div class="px-2 py-1.5 flex items-center justify-between border-b hairline">
+              <div class="flex items-center gap-2">
+                <span class="affil affil-hostile"></span>
+                <span class="mono text-[11px] font-semibold">TGT-NR-1290</span>
+              </div>
+              <span class="chip chip-amber">JIPTL #8</span>
+            </div>
+            <div class="ops-row"><span class="k">CALL</span><span class="v">ALTAIR-AAA</span></div>
+            <div class="ops-row"><span class="k">TYPE</span><span class="v">AAA · QUAD 23mm</span></div>
+            <div class="ops-row"><span class="k">MGRS</span><span class="v">52S MC 87440 42072</span></div>
+            <div class="ops-row"><span class="k">ISR</span><span class="v">RC-135 · CUED</span></div>
+            <div class="ops-row"><span class="k">SRC</span><span class="v">SIGINT · NGA <span class="ink-faint">(2)</span></span></div>
+          </article>
+
+        </div>
+      </div>
+
+      <!-- DELIVER -->
+      <div>
+        <div class="col-head flex items-center justify-between" data-tip="col-deliver" data-tip-title="DELIVER · D3A/3"
+             data-tip-body="Execution stage. HARD GATE — requires O5+ approval. CoT auto-published to TAK Server on entry.">
+          <div>
+            <div class="num">D3A · 03</div>
+            <div class="name" style="color: var(--hostile-2);">DELIVER</div>
+          </div>
+          <span class="chip chip-dim mono">2 · GATED</span>
+        </div>
+        <div class="col-body p-2 space-y-2">
+
+          <article class="ops-card critical" data-tip="t1248" data-tip-title="TGT-NR-1248 · TST · APPROVAL PENDING"
+                   data-tip-body="TST window 14 min · DELIVER queue pos #1 · awaiting OPS-O approval.">
+            <div class="px-2 py-1.5 flex items-center justify-between border-b hairline">
+              <div class="flex items-center gap-2">
+                <span class="affil affil-hostile"></span>
+                <span class="mono text-[11px] font-semibold">TGT-NR-1248</span>
+              </div>
+              <span class="chip chip-bad mono">TST · 14m</span>
+            </div>
+            <div class="ops-row"><span class="k">CALL</span><span class="v">CASSIOPEIA-MOB</span></div>
+            <div class="ops-row"><span class="k">TYPE</span><span class="v">SRBM TEL · ERECTED</span></div>
+            <div class="ops-row"><span class="k">MGRS</span><span class="v">52S MC 88040 41210</span></div>
+            <div class="ops-row"><span class="k">FIRES</span><span class="v">MK48 ATK · USS DREW</span></div>
+            <div class="ops-row"><span class="k">CDE</span><span class="v">LV 1 · PASS</span></div>
+            <div class="ops-row"><span class="k">APV</span><span class="v amber">QUEUE #1</span></div>
+            <div class="px-2 py-1.5 border-t hairline flex gap-1">
+              <button class="btn btn-good text-[11px] flex-1" data-tip="apv" data-tip-title="Approve to DELIVER"
+                      data-tip-body="Promotes to DELIVER · publishes CoT · notifies fires cell · logs actor/DTG.">APPROVE <span class="kbd ml-1">⏎</span></button>
+              <button class="btn btn-danger text-[11px]">REJECT</button>
+            </div>
+          </article>
+
+          <article class="ops-card" data-tip="t1239" data-tip-title="TGT-NR-1239 · scheduled">
+            <div class="px-2 py-1.5 flex items-center justify-between border-b hairline">
+              <div class="flex items-center gap-2">
+                <span class="affil affil-hostile"></span>
+                <span class="mono text-[11px] font-semibold">TGT-NR-1239</span>
+              </div>
+              <span class="chip chip-good">APPROVED</span>
+            </div>
+            <div class="ops-row"><span class="k">CALL</span><span class="v">ORION-RAD</span></div>
+            <div class="ops-row"><span class="k">TYPE</span><span class="v">EW RADAR</span></div>
+            <div class="ops-row"><span class="k">FIRES</span><span class="v">AGM-88 · TIME ON TGT 2215Z</span></div>
+            <div class="ops-row"><span class="k">CDE</span><span class="v">LV 2 · PASS</span></div>
+          </article>
+
+        </div>
+      </div>
+
+      <!-- ASSESS -->
+      <div>
+        <div class="col-head flex items-center justify-between" data-tip="col-assess" data-tip-title="ASSESS · D3A/4"
+             data-tip-body="BDA / post-strike assessment. May spawn new candidates (re-attack, secondary effects) back to DECIDE.">
+          <div>
+            <div class="num">D3A · 04</div>
+            <div class="name">ASSESS</div>
+          </div>
+          <span class="chip chip-dim mono">4</span>
+        </div>
+        <div class="col-body p-2 space-y-2">
+
+          <article class="ops-card" data-tip="t1220" data-tip-title="TGT-NR-1220 · BDA in progress">
+            <div class="px-2 py-1.5 flex items-center justify-between border-b hairline">
+              <div class="flex items-center gap-2">
+                <span class="affil affil-hostile"></span>
+                <span class="mono text-[11px] font-semibold">TGT-NR-1220</span>
+              </div>
+              <span class="chip chip-good">BDA-1</span>
+            </div>
+            <div class="ops-row"><span class="k">CALL</span><span class="v">RIGEL-AAA</span></div>
+            <div class="ops-row"><span class="k">EFFECT</span><span class="v">DESTROYED · CONF</span></div>
+            <div class="ops-row"><span class="k">BDA</span><span class="v">NGA T+45 min · BDA-2 due</span></div>
+            <div class="ops-row"><span class="k">REATK</span><span class="v">NOT REQUIRED</span></div>
+          </article>
+
+          <article class="ops-card" data-tip="t1206" data-tip-title="TGT-NR-1206 · re-attack queued">
+            <div class="px-2 py-1.5 flex items-center justify-between border-b hairline">
+              <div class="flex items-center gap-2">
+                <span class="affil affil-hostile"></span>
+                <span class="mono text-[11px] font-semibold">TGT-NR-1206</span>
+              </div>
+              <span class="chip chip-warn">REATK</span>
+            </div>
+            <div class="ops-row"><span class="k">CALL</span><span class="v">BETELGEUSE-LOG</span></div>
+            <div class="ops-row"><span class="k">EFFECT</span><span class="v">FUNCTIONAL · DEG 40%</span></div>
+            <div class="ops-row"><span class="k">BDA</span><span class="v">BDA-1 · NIIRS 4</span></div>
+            <div class="ops-row"><span class="k">SPAWN</span><span class="v amber">TGT-NR-1206b · DECIDE</span></div>
+          </article>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- RIGHT: approvals, COP, audit -->
+  <aside class="space-y-3">
+
+    <!-- APPROVAL QUEUE -->
+    <div class="panel">
+      <div class="px-3 py-2 border-b hairline flex items-center justify-between" style="background: linear-gradient(180deg, rgba(240,183,61,0.08), transparent);">
+        <div>
+          <div class="display text-[10px] amber" style="letter-spacing: 0.42em;">AWAITING YOU</div>
+          <div class="text-[12px] mono"><span class="amber text-[14px] font-semibold">3</span> approvals · oldest 4m</div>
+        </div>
+        <span class="chip chip-amber-solid mono">OPS-O</span>
+      </div>
+
+      <ul class="divide-y hairline">
+        <li class="apv p-2.5">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="chip chip-bad mono">TST 14m</span>
+            <span class="mono text-[11px] font-semibold">TGT-NR-1248 · CASSIOPEIA-MOB</span>
+          </div>
+          <div class="text-[11px] ink-dim">SRBM TEL erected · CDE LV 1 PASS · fires assigned USS DREW.</div>
+          <div class="flex gap-1 mt-2">
+            <button class="btn btn-good text-[11px] flex-1">APPROVE <span class="kbd ml-1">⏎</span></button>
+            <button class="btn btn-danger text-[11px]">REJECT</button>
+            <button class="btn btn-ghost text-[11px]">DETAILS</button>
+          </div>
+        </li>
+        <li class="apv p-2.5">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="chip chip-warn">RTL</span>
+            <span class="mono text-[11px] font-semibold">TGT-NR-1271 · CETUS-DUAL</span>
+          </div>
+          <div class="text-[11px] ink-dim">Dual-use facility · RTL flag · awaiting authority release.</div>
+          <div class="flex gap-1 mt-2">
+            <button class="btn btn-good text-[11px] flex-1">APPROVE</button>
+            <button class="btn btn-danger text-[11px]">REJECT</button>
+          </div>
+        </li>
+        <li class="apv p-2.5">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="chip chip-dim mono">NSL CHK</span>
+            <span class="mono text-[11px] font-semibold">TGT-NR-1273 · DENEB-LOG</span>
+          </div>
+          <div class="text-[11px] ink-dim">CDE LV 3 · NSL proximity check requested by J2T.</div>
+          <div class="flex gap-1 mt-2">
+            <button class="btn text-[11px] flex-1">REVIEW NSL</button>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- COP MAP -->
+    <div class="panel">
+      <div class="px-3 py-2 border-b hairline flex items-center justify-between">
+        <div>
+          <div class="display text-[10px] amber" style="letter-spacing: 0.42em;">COMMON OP PICTURE</div>
+          <div class="text-[11px] mono ink-dim">AOR · JTF-22 · MGRS 52S MC</div>
+        </div>
+        <div class="flex items-center gap-1">
+          <button class="btn btn-ghost text-[11px] mono">FLOT</button>
+          <button class="btn btn-ghost text-[11px] mono">NAI</button>
+          <button class="btn btn-ghost text-[11px] mono">JIPTL</button>
+        </div>
+      </div>
+      <div class="cop" style="height: 260px;">
+        <div class="ring" style="width: 60%; height: 60%;"></div>
+        <div class="ring" style="width: 80%; height: 80%;"></div>
+        <div class="pin hostile"  style="top: 32%; left: 44%;"><div class="dot"></div><div class="label">POLARIS-CMD</div></div>
+        <div class="pin hostile"  style="top: 56%; left: 60%;"><div class="dot"></div><div class="label">VEGA-MOB</div></div>
+        <div class="pin hostile"  style="top: 28%; left: 30%;"><div class="dot"></div><div class="label">SIRIUS-RAD</div></div>
+        <div class="pin hostile"  style="top: 64%; left: 36%;"><div class="dot"></div><div class="label">CASSIOPEIA</div></div>
+        <div class="pin hostile"  style="top: 48%; left: 72%;"><div class="dot"></div><div class="label">ALTAIR-AAA</div></div>
+        <div class="pin friendly" style="top: 80%; left: 14%;"><div class="dot"></div><div class="label">JTF-22 FWD</div></div>
+        <div class="pin friendly" style="top: 86%; left: 86%;"><div class="dot"></div><div class="label">USS DREW</div></div>
+
+        <div class="absolute bottom-2 left-2 sectorlabel">SCALE · 1:250,000</div>
+        <div class="absolute bottom-2 right-2 mono text-[10px] ink-dim">N ↑</div>
+      </div>
+    </div>
+
+    <!-- AUDIT TRACE -->
+    <div class="panel">
+      <div class="px-3 py-2 border-b hairline flex items-center justify-between">
+        <div class="display text-[10px] amber" style="letter-spacing: 0.42em;">AUDIT TRACE</div>
+        <button class="btn btn-ghost text-[11px] mono" data-tip="export" data-tip-title="Export audit log" data-tip-body="JSONL · operator-signed · append-only · CJCSI 6510 compatible.">EXPORT</button>
+      </div>
+      <ul class="text-[11px] divide-y hairline" style="max-height: 220px; overflow-y: auto;">
+        <li class="px-3 py-2">
+          <div class="flex items-center justify-between">
+            <span class="mono">TGT-1248 · DELIVER</span>
+            <span class="mono text-[10px] ink-faint">162143Z</span>
+          </div>
+          <div class="ink-dim text-[11px]">TST nominated · J2T → OPS-O · TST WIN 14m</div>
+        </li>
+        <li class="px-3 py-2">
+          <div class="flex items-center justify-between">
+            <span class="mono">TGT-1239 · DELIVER</span>
+            <span class="mono text-[10px] ink-faint">162132Z</span>
+          </div>
+          <div class="ink-dim text-[11px]">Approved by <span class="text-white">MAJ HOLLOWAY</span> · CoT to TAK Server</div>
+        </li>
+        <li class="px-3 py-2">
+          <div class="flex items-center justify-between">
+            <span class="mono">TGT-1220 · ASSESS</span>
+            <span class="mono text-[10px] ink-faint">162102Z</span>
+          </div>
+          <div class="ink-dim text-[11px]">BDA-1 received · effect DESTROYED · confidence CONF</div>
+        </li>
+        <li class="px-3 py-2">
+          <div class="flex items-center justify-between">
+            <span class="mono">TGT-1206 · ASSESS</span>
+            <span class="mono text-[10px] ink-faint">160940Z</span>
+          </div>
+          <div class="ink-dim text-[11px]">Re-attack candidate spawned · TGT-1206b → DECIDE</div>
+        </li>
+        <li class="px-3 py-2">
+          <div class="flex items-center justify-between">
+            <span class="mono">TGT-1247 · DECIDE</span>
+            <span class="mono text-[10px] ink-faint">160812Z</span>
+          </div>
+          <div class="ink-dim text-[11px]">CDE LV 2 in progress · A. MEHTA · J2T</div>
+        </li>
+      </ul>
+    </div>
+
+  </aside>
+
+</main>
+
+<!-- BATTLE RHYTHM -->
+<div class="relative z-10 px-3 pt-3">
+  <div class="panel">
+    <div class="px-3 py-2 border-b hairline flex items-center justify-between">
+      <div class="display text-[10px] amber" style="letter-spacing: 0.42em;">BATTLE RHYTHM · 24H</div>
+      <div class="mono text-[11px] ink-dim">all times Z · now: <span class="amber">2145Z</span></div>
+    </div>
+    <div class="rhythm" id="rhythm"></div>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<footer class="relative z-10 mt-3 border-t hairline-2 px-4 py-2 flex items-center gap-3 text-[11px] mono" style="background: var(--bg-2);">
+  <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full" style="background: var(--amber); box-shadow: 0 0 6px var(--amber);"></span> TAK Server <span class="amber">tak.jtf22.mil:8089</span> · 22 EUD</div>
+  <span class="h-3 w-px border-l hairline"></span>
+  <span>Audit <span class="text-white">APPEND-ONLY</span> · 4,812 / 24h</span>
+  <span class="h-3 w-px border-l hairline"></span>
+  <span>Sources <span class="text-white">6 active</span> · 41 unprocessed</span>
+  <span class="h-3 w-px border-l hairline"></span>
+  <span>JIPTL <span class="text-white">47</span> · RTL <span class="text-white">12</span> · NSL <span class="text-white">84</span></span>
+  <span class="ml-auto ink-faint display text-[10px]" style="letter-spacing: 0.32em;">TARGET WORKSPACE · 0.1.0 · MOCKUP</span>
+</footer>
+
+<!-- bottom classification -->
+<div class="classif-band text-[10px] font-bold text-center py-[4px] mt-1">SECRET // REL TO USA, FVEY // DEMONSTRATION DATA — NOT OPERATIONAL</div>
+
+<!-- Tooltip -->
+<div id="tt" class="tt" role="tooltip"></div>
+
+<script>
+(() => {
+  // tooltip
+  const tt = document.getElementById('tt');
+  let active = null;
+  const show = (el) => {
+    active = el;
+    const title = el.getAttribute('data-tip-title') || '';
+    const body  = el.getAttribute('data-tip-body')  || '';
+    tt.innerHTML = (title ? `<div class="tt-title">${title}</div>` : '') + (body ? `<div>${body}</div>` : '');
+    tt.classList.add('show');
+    position(el);
+  };
+  const hide = () => { tt.classList.remove('show'); active = null; };
+  const position = (el) => {
+    const r = el.getBoundingClientRect();
+    const ttr = tt.getBoundingClientRect();
+    let x = r.left + r.width/2 - ttr.width/2;
+    let y = r.bottom + 8;
+    if (y + ttr.height > window.innerHeight - 8) y = r.top - ttr.height - 8;
+    x = Math.max(8, Math.min(x, window.innerWidth - ttr.width - 8));
+    tt.style.left = x + 'px';
+    tt.style.top  = y + 'px';
+  };
+  document.querySelectorAll('[data-tip]').forEach(el => {
+    el.addEventListener('mouseenter', () => show(el));
+    el.addEventListener('mouseleave', hide);
+    el.addEventListener('focus', () => show(el));
+    el.addEventListener('blur', hide);
+  });
+  window.addEventListener('scroll', () => { if (active) position(active); }, true);
+  window.addEventListener('resize', () => { if (active) position(active); });
+
+  // battle rhythm
+  const r = document.getElementById('rhythm');
+  const w = r.clientWidth;
+  const hours = 24;
+  const now = 21.75; // 2145Z
+  const events = [
+    { t: 6,  text: 'CDR INTEL UPDATE', color: '#f0b73d' },
+    { t: 8,  text: 'JTCB STANDUP',    color: '#f0b73d' },
+    { t: 10, text: 'ISR HANDOFF',     color: '#5fa9d6' },
+    { t: 12, text: 'STAFF SYNC',      color: '#9aa3a8' },
+    { t: 14, text: 'BDA REVIEW',      color: '#4ab87a' },
+    { t: 16, text: 'CDR BACKBRIEF',   color: '#f0b73d' },
+    { t: 18, text: 'JTCB TST WORKING',color: '#e84a3b' },
+    { t: 20, text: 'NIGHT SHIFT HOFF',color: '#5fa9d6' },
+    { t: 22.25, text: 'TST WINDOW',   color: '#e84a3b' },
+  ];
+  for (let h = 0; h < hours; h++) {
+    const x = (h / hours) * 100;
+    const tick = document.createElement('div');
+    tick.className = 'tick' + (h % 6 === 0 ? ' major' : '');
+    tick.style.left = x + '%';
+    r.appendChild(tick);
+    if (h % 2 === 0) {
+      const lab = document.createElement('div');
+      lab.className = 'label';
+      lab.style.left = x + '%';
+      lab.textContent = (h<10?'0':'')+h+'00Z';
+      r.appendChild(lab);
+    }
+  }
+  events.forEach(e => {
+    const wrap = document.createElement('div');
+    wrap.className = 'event';
+    wrap.style.left = (e.t / hours * 100) + '%';
+    wrap.innerHTML = `<div class="dot" style="background:${e.color};"></div><div class="text">${e.text}</div>`;
+    r.appendChild(wrap);
+  });
+  const now_l = document.createElement('div');
+  now_l.className = 'now';
+  now_l.style.left = (now / hours * 100) + '%';
+  r.appendChild(now_l);
+})();
+</script>
+</body>
+</html>

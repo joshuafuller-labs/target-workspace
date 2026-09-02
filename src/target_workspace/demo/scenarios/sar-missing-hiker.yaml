@@ -1,0 +1,137 @@
+# State/local SAR — missing hiker
+# Mirrors the SAR mockup. Sample data only.
+
+name: "EPC OEM · Missing Hiker SAR"
+workspace_name: "EPC OEM"
+
+board:
+  name: "SAR · Missing Person"
+  transitions: unrestricted
+  theme: sar
+  columns:
+    - { name: REPORT,   order: 0 }
+    - { name: TRIAGE,   order: 1 }
+    - { name: ASSIGN,   order: 2 }
+    - { name: SEARCH,   order: 3 }
+    - { name: RESOLVED, order: 4 }
+
+targets:
+  # --- REPORT (incoming cues) ---
+  - name: "IR-warm-signature"
+    column_name: REPORT
+    cot_type: a-u-G-U-C
+    lat: 38.85912
+    lon: -105.04188
+    confidence: 0.74
+    minutes_ago: 2
+    custom_fields:
+      cue_type: "DRONE IR"
+      source: "AIR-1 (DJI Mavic 3T)"
+      bbox: [120, 88, 142, 124]
+
+  - name: "orange-jacket-sighting"
+    column_name: REPORT
+    cot_type: a-u-G-U-C
+    lat: 38.86040
+    lon: -105.04335
+    minutes_ago: 9
+    custom_fields:
+      cue_type: "TIP"
+      source: "trail spur 7B hiker"
+
+  - name: "cell-ping-tower-MNT-3"
+    column_name: REPORT
+    cot_type: a-u-G-U-C
+    lat: 38.85800
+    lon: -105.04600
+    confidence: 0.32
+    minutes_ago: 23
+    custom_fields:
+      cue_type: "CELL PING"
+      source: "carrier tower MNT-3"
+      accuracy_m: 480
+
+  # --- TRIAGE ---
+  - name: "possible-track-drainage-E"
+    column_name: TRIAGE
+    cot_type: a-u-G-U-C
+    lat: 38.85710
+    lon: -105.04150
+    minutes_ago: 25
+    custom_fields:
+      cue_type: "DRONE"
+      suggested_segment: "A2"
+      priority: MED
+    transitions:
+      - { to_column: TRIAGE, justification: "drone hit aligned with NW drift pattern", minutes_ago: 18 }
+
+  # --- ASSIGN ---
+  - name: "ALPHA-seg-A4"
+    column_name: ASSIGN
+    cot_type: a-f-G-U-C
+    lat: 38.85490
+    lon: -105.04030
+    minutes_ago: 14
+    custom_fields:
+      team: "ALPHA"
+      segment: "A4"
+      area_sq_mi: 0.62
+    transitions:
+      - { to_column: TRIAGE, justification: "segment plan finalized", minutes_ago: 12 }
+      - { to_column: ASSIGN, justification: "ALPHA enroute, ack pending", minutes_ago: 10 }
+
+  - name: "K9-1-seg-A3"
+    column_name: ASSIGN
+    cot_type: a-f-G-U-C
+    lat: 38.86180
+    lon: -105.04510
+    minutes_ago: 19
+    custom_fields:
+      team: "K9-1"
+      segment: "A3"
+      handler: "S. Vega"
+    transitions:
+      - { to_column: ASSIGN, justification: "K9 enroute, scent box from LKP", minutes_ago: 16 }
+
+  # --- SEARCH (active) ---
+  - name: "BRAVO-seg-A2-active"
+    column_name: SEARCH
+    cot_type: a-f-G-U-C
+    lat: 38.86040
+    lon: -105.04220
+    minutes_ago: 60
+    custom_fields:
+      team: "BRAVO"
+      segment: "A2"
+      progress_pct: 78
+      comms: intermittent
+    transitions:
+      - { to_column: ASSIGN, justification: "BRAVO enroute", minutes_ago: 50 }
+      - { to_column: SEARCH, justification: "BRAVO on segment A2, sweeping E", minutes_ago: 38 }
+
+  # --- RESOLVED ---
+  - name: "seg-A1-cleared"
+    column_name: RESOLVED
+    cot_type: a-f-G-U-C
+    lat: 38.86000
+    lon: -105.04600
+    minutes_ago: 102
+    custom_fields:
+      segment: "A1"
+      result: "cleared · no contact"
+      area_sq_mi: 0.55
+    transitions:
+      - { to_column: SEARCH,   justification: "ALPHA sweep started",  minutes_ago: 95 }
+      - { to_column: RESOLVED, justification: "no contact · cleared", minutes_ago: 38 }
+
+  - name: "IR-false-positive-deer"
+    column_name: RESOLVED
+    cot_type: a-u-G-U-C
+    lat: 38.85910
+    lon: -105.04060
+    minutes_ago: 118
+    custom_fields:
+      cue_type: "DRONE IR"
+      result: "false positive · deer signature"
+    transitions:
+      - { to_column: RESOLVED, justification: "thermal signature ruled out (model confirm)", minutes_ago: 110 }

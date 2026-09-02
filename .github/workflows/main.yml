@@ -1,0 +1,130 @@
+name: Main branch
+
+# On push to main: inherit all PR validation, then build + sign + attest the image.
+
+on:
+  push:
+    branches: [main]
+    # tw-qvdi.9: tracker/doc-only pushes don't need an image rebuild.
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: main-${{ github.ref }}
+  # Dogfood velocity: the newest main push is the only deployable state that
+  # matters. Older long image builds should not block auth/UI fixes from
+  # reaching tw.ddns.network.
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Re-run PR validation on main
+    uses: ./.github/workflows/pr.yml
+    with:
+      # Keep dogfood pushes deployable. Full integration + coverage remains the
+      # default PR/workflow_dispatch gate; main re-runs fast behavioral checks
+      # while the image build/push lane runs in parallel.
+      test-scope: fast
+    permissions:
+      contents: read
+
+  publish:
+    name: Build + sign + attest + push image
+    # tw-qvdi.9 FAST LANE: do NOT wait on the ~22-min test gate. The image builds
+    # + pushes in parallel (~5 min) so dogfood deploys are fast; `validate` still
+    # runs for the main-branch quality signal but no longer blocks the image.
+    runs-on: arc-homelab-runner
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write       # GHCR push
+      id-token: write       # Sigstore keyless signing
+      attestations: write   # build provenance + SBOM attestation
+
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
+        with:
+          # Use the host Docker engine's builder on dogfood pushes. The default
+          # docker-container driver pulls moby/buildkit from Docker Hub before
+          # every ephemeral ARC job; transient Docker Hub TLS failures have been
+          # blocking otherwise-valid deploys.
+          driver: docker
+
+      - name: Login to GHCR
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5; do
+            if printf '%s' "$GHCR_TOKEN" | docker login ghcr.io \
+              --username "${{ github.actor }}" \
+              --password-stdin; then
+              exit 0
+            fi
+            sleep $((attempt * 5))
+          done
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io \
+            --username "${{ github.actor }}" \
+            --password-stdin
+
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=main
+            type=sha,prefix=sha-,format=short
+
+      - name: Build + push (multi-arch)
+        id: build
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7
+        with:
+          context: .
+          file: docker/Dockerfile
+          # tw-qvdi.9: single-arch — the homelab cluster is amd64; arm64 via QEMU
+          # ~doubled build time for an unused image. Re-add arm64 if it's ever needed.
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache,mode=max
+          provenance: mode=max
+          sbom: true
+
+      - name: Install cosign
+        env:
+          COSIGN_VERSION: v3.0.6
+          COSIGN_LINUX_AMD64_SHA256: c956e5dfcac53d52bcf058360d579472f0c1d2d9b69f55209e256fe7783f4c74 # pragma: allowlist secret
+        run: |
+          set -euo pipefail
+          install -d "$RUNNER_TEMP/cosign"
+          curl --fail --location --silent --show-error --retry 3 \
+            "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64" \
+            --output "$RUNNER_TEMP/cosign/cosign"
+          echo "${COSIGN_LINUX_AMD64_SHA256}  $RUNNER_TEMP/cosign/cosign" | sha256sum --check -
+          chmod +x "$RUNNER_TEMP/cosign/cosign"
+          echo "$RUNNER_TEMP/cosign" >> "$GITHUB_PATH"
+
+      - name: Sign image (keyless)
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          echo "$TAGS" | while read -r tag; do
+            cosign sign --yes "${tag}@${DIGEST}"
+          done

@@ -1,0 +1,339 @@
+# TF DAGGER — F3EAD targeting cycle
+# Populated workspace mirroring the DoD Tactical mockup. Sample data only.
+#
+# Carries a mix of ground targets (a-h-G-*) and Counter-UAS air targets
+# (a-h-A-*) — F3EAD is a generic targeting cycle; same engine processes
+# both, just different CoT affiliation + payload-shape custom fields.
+# Demonstrates that "C-UAS" is not a separate workflow, it's the same
+# Find/Fix/Finish/Exploit/Analyze/Disseminate applied to small-UAS
+# contacts.
+
+name: "TF DAGGER F3EAD"
+workspace_name: "TF DAGGER"
+
+board:
+  name: "F3EAD"
+  transitions: unrestricted
+  theme: tactical
+  columns:
+    - { name: FIND,    order: 0 }
+    - { name: FIX,     order: 1 }
+    - { name: FINISH,  order: 2, requires_approval: true }
+    - { name: EXPLOIT, order: 3 }
+    - { name: ANALYZE, order: 4 }
+    - { name: DISSEM,  order: 5 }
+
+publishers:
+  - name: "raw CoT (multicast)"
+    plugin_type: raw_cot
+    adapter_config: { transport: udp, host: 239.2.3.1, port: 6969 }
+    column_filter_names: [DISSEM]
+
+targets:
+  # --- FIND (3 fresh cues) ---
+  - name: BISON-01
+    column_name: FIND
+    cot_type: a-h-G-E-V
+    lat: 38.85912
+    lon: -105.04188
+    ce: 18
+    confidence: 0.87
+    minutes_ago: 2
+    custom_fields:
+      jiptl_priority: 18
+      source: CV-ATR (MQ-9)
+      sources: 1
+      grade: B2
+
+  - name: VIPER-23
+    column_name: FIND
+    cot_type: a-h-G-U-C
+    lat: 38.85970
+    lon: -105.04420
+    ce: 35
+    confidence: 0.62
+    minutes_ago: 7
+    custom_fields:
+      jiptl_priority: 22
+      source: HUMINT (HCT-7)
+      grade: C3
+
+  - name: HORNET-04
+    column_name: FIND
+    cot_type: a-u-G-I
+    lat: 38.85412
+    lon: -105.03988
+    ce: 8
+    confidence: 0.71
+    minutes_ago: 22
+    custom_fields:
+      jiptl_priority: 27
+      source: GEOINT (NGA 24h delta)
+
+  # C-UAS: raw radar return on a small unmanned air contact entering the
+  # AO. UAS Group-1 candidate; not yet correlated with other sensors.
+  - name: KITE-22
+    column_name: FIND
+    cot_type: a-u-A
+    lat: 38.85988
+    lon: -105.04550
+    hae: 122
+    ce: 14
+    confidence: 0.63
+    minutes_ago: 3
+    custom_fields:
+      domain: air
+      uas_group: 1
+      sensor: "Ku-band radar"
+      rcs_m2: 0.04
+      alt_agl_m: 118
+      heading_deg: 092
+      speed_kt: 24
+      iff: "no transponder"
+
+  # EW: line-of-bearing from a single RF DF collector. Ellipse models the
+  # uncertainty cone — wide cross-bearing (300m), narrow along-bearing
+  # (1500m), rotated to the major-axis bearing. This is the canonical
+  # "single-sensor LOB" geometry; flagged as `bearing-only` so RoE gates
+  # against kinetic engagement until corroborated.
+  - name: DF-LOB-04
+    column_name: FIND
+    cot_type: a-u-A
+    lat: 38.85600
+    lon: -105.04200
+    hae: null
+    minutes_ago: 5
+    geometry_kind: ellipse
+    geometry_quality: bearing-only
+    ellipse:
+      semi_major_m: 1500
+      semi_minor_m: 300
+      bearing_deg: 87
+    custom_fields:
+      sensor: "RF DF · single collector"
+      rf_band: "433 MHz"
+      collector: "RF-COL-NE"
+      lob_truth_basis: "1-sigma uncertainty"
+
+  # --- FIX (3 corroborated) ---
+  - name: COBRA-12
+    column_name: FIX
+    cot_type: a-h-G-E-V-C
+    lat: 38.85620
+    lon: -105.04150
+    ce: 12
+    le: 18
+    confidence: 0.91
+    minutes_ago: 18
+    custom_fields:
+      jiptl_priority: 8
+      sources: 2
+      grade: A2
+    transitions:
+      - { to_column: FIX, justification: "cross-cue threshold met (CV-ATR + HUMINT)", minutes_ago: 12 }
+
+  - name: BADGER-07
+    column_name: FIX
+    cot_type: a-h-G-I
+    lat: 38.85820
+    lon: -105.04280
+    ce: 9
+    confidence: 0.86
+    minutes_ago: 66
+    custom_fields:
+      jiptl_priority: 12
+      sources: 2
+      grade: B2
+    transitions:
+      - { to_column: FIX, justification: "HUMINT validates GEOINT cue", minutes_ago: 38 }
+
+  - name: FOX-19
+    column_name: FIX
+    cot_type: a-h-G-E-V
+    lat: 38.85510
+    lon: -105.04050
+    ce: 22
+    confidence: 0.88
+    minutes_ago: 30
+    custom_fields:
+      jiptl_priority: 14
+      sources: 1
+    transitions:
+      - { to_column: FIX, justification: "vehicle ID confirmed, awaiting second cue", minutes_ago: 10 }
+
+  # C-UAS: corroborated track on a Group-1 quadcopter (Ku radar + RF
+  # OcuSync intercept + EO/IR). RoE affiliation determined HOSTILE based
+  # on no IFF, no FAA Part 107 filing, and armed-payload candidate
+  # signature.
+  - name: RAVEN-09
+    column_name: FIX
+    cot_type: a-h-A
+    lat: 38.85740
+    lon: -105.04380
+    hae: 138
+    ce: 9
+    confidence: 0.89
+    minutes_ago: 26
+    custom_fields:
+      domain: air
+      uas_group: 1
+      platform_candidate: "DJI Mavic 3 (modified)"
+      track_no: "TN-RAVEN-09"
+      sources: ["Ku radar", "RF OcuSync", "EO/IR"]
+      affiliation: "HOSTILE"
+      affiliation_basis: "no IFF, no Part 107, payload anomaly"
+    transitions:
+      - { to_column: FIX, justification: "tri-sensor correlation + payload anomaly", minutes_ago: 18 }
+
+  # --- FINISH (1 approved, 1 awaiting approval) ---
+  - name: PANTHER-09
+    column_name: FINISH
+    cot_type: a-h-G-E-V-C
+    lat: 38.85780
+    lon: -105.04330
+    ce: 11
+    confidence: 0.94
+    minutes_ago: 60
+    geometry_quality: corroborated
+    custom_fields:
+      jiptl_priority: 4
+      sources: 3
+      cde_level: "LV-1 PASS"
+      tst_window_minutes: 14
+    transitions:
+      - { to_column: FIX,    justification: "convoy entering NAI-3",         minutes_ago: 50 }
+      - { to_column: FINISH, justification: "TST approved",                  minutes_ago: 4, approving_role: "OPS-O" }
+
+  - name: SHARK-02
+    column_name: FINISH
+    cot_type: a-h-G-I
+    lat: 38.85890
+    lon: -105.04420
+    ce: 7
+    confidence: 0.96
+    minutes_ago: 90
+    geometry_quality: confirmed
+    custom_fields:
+      jiptl_priority: 6
+      sources: 4
+      cde_level: "LV-2 PASS"
+    transitions:
+      - { to_column: FIX,    justification: "structure persistent, multi-source", minutes_ago: 78 }
+      - { to_column: FINISH, justification: "TST scheduled 2215Z",                minutes_ago: 32, approving_role: "CDR" }
+
+  # C-UAS: kinetic intercept authorized on a hostile Group-2 fixed-wing
+  # (Shahed-136 candidate) inbound. Time-critical: engagement window
+  # measured in seconds. Effector is a Coyote SRT block-2 — approval
+  # gated through battery commander.
+  - name: HARPY-01
+    column_name: FINISH
+    cot_type: a-h-A
+    lat: 38.86120
+    lon: -105.04790
+    hae: 220
+    ce: 8
+    confidence: 0.97
+    minutes_ago: 48
+    geometry_quality: corroborated
+    custom_fields:
+      domain: air
+      uas_group: 2
+      platform_candidate: "Shahed-136 (one-way attack)"
+      track_no: "TN-HARPY-01"
+      effector: "Coyote SRT block 2"
+      effect_type: "kinetic intercept"
+      cde_level: "LV-1 PASS"
+      eng_window_remaining_s: 22
+    transitions:
+      - { to_column: FIX,    justification: "fixed-wing track on radar + IR",            minutes_ago: 42 }
+      - { to_column: FINISH, justification: "kinetic intercept authorized · Coyote SRT", minutes_ago: 2, approving_role: "BN-CDR" }
+
+  # --- EXPLOIT (1 in SSE) ---
+  - name: WOLF-03
+    column_name: EXPLOIT
+    cot_type: a-h-G-I
+    lat: 38.85700
+    lon: -105.04250
+    ce: 9
+    confidence: 0.93
+    minutes_ago: 240
+    custom_fields:
+      jiptl_priority: 3
+      sources: 4
+      sse_devices: 3
+      sse_photos: 12
+    transitions:
+      - { to_column: FIX,     justification: "compound confirmed, SHQ-likely",      minutes_ago: 220 }
+      - { to_column: FINISH,  justification: "raid approved",                       minutes_ago: 180, approving_role: "CDR" }
+      - { to_column: EXPLOIT, justification: "objective secured, SSE team on-site", minutes_ago: 107 }
+
+  # --- ANALYZE (1 in PED, spawned children) ---
+  - name: HAWK-18
+    column_name: ANALYZE
+    cot_type: a-h-G-U-C
+    lat: 38.85850
+    lon: -105.04500
+    ce: 15
+    confidence: 0.74
+    minutes_ago: 200
+    custom_fields:
+      jiptl_priority: 9
+      sources: 3
+      ped_nodes: 14
+      ped_edges: 22
+      spawned_children: 3
+    transitions:
+      - { to_column: FIX,     justification: "personnel cluster pattern-of-life",   minutes_ago: 180 }
+      - { to_column: FINISH,  justification: "DDA approved",                        minutes_ago: 150, approving_role: "OPS-O" }
+      - { to_column: EXPLOIT, justification: "DOMEX captured, network exposed",     minutes_ago: 130 }
+      - { to_column: ANALYZE, justification: "link analysis spawns 3 candidates",   minutes_ago: 110 }
+
+  # --- DISSEM (1 broadcast to TAK) ---
+  # C-UAS: previously-defeated hostile drone — BDA result published mesh-
+  # wide so the airspace coordinator and every TAK EUD reflects the
+  # threat as DESTROYED and airspace as released. Same DISSEM path as a
+  # ground target; the difference is the CoT affiliation + payload data.
+  - name: SHRIKE-04
+    column_name: DISSEM
+    cot_type: a-h-A
+    lat: 38.85510
+    lon: -105.04680
+    hae: 0
+    ce: 4
+    confidence: 0.99
+    minutes_ago: 132
+    custom_fields:
+      domain: air
+      uas_group: 2
+      effector: "Coyote SRT block 2"
+      effect_type: "kinetic intercept"
+      bda_result: "DESTROYED · debris field grid 13S BJ 1234"
+      civilian_collateral: "none"
+      airspace_release: "yes — debris clear at 132 minutes"
+      eud_acks: 17
+    transitions:
+      - { to_column: FIX,     justification: "fixed-wing track corroborated",           minutes_ago: 128 }
+      - { to_column: FINISH,  justification: "kinetic intercept authorized",            minutes_ago: 122, approving_role: "BN-CDR" }
+      - { to_column: EXPLOIT, justification: "wreckage recovered · payload triaged",    minutes_ago: 110 }
+      - { to_column: ANALYZE, justification: "ATR signature added to ML training set",  minutes_ago: 95 }
+      - { to_column: DISSEM,  justification: "BDA + airspace-release published to TAK", minutes_ago: 82 }
+
+  - name: EAGLE-31
+    column_name: DISSEM
+    cot_type: a-h-G-E-V
+    lat: 38.85420
+    lon: -105.04180
+    ce: 5
+    confidence: 0.97
+    minutes_ago: 184
+    geometry_quality: confirmed
+    custom_fields:
+      jiptl_priority: 2
+      sources: 5
+      eud_acks: 14
+    transitions:
+      - { to_column: FIX,     justification: "technical confirmed multi-source",    minutes_ago: 170 }
+      - { to_column: FINISH,  justification: "strike authorized",                   minutes_ago: 155, approving_role: "CDR" }
+      - { to_column: EXPLOIT, justification: "BDA imagery acquired",                minutes_ago: 140 }
+      - { to_column: ANALYZE, justification: "BDA-1 effect assessed: DESTROYED",    minutes_ago: 125 }
+      - { to_column: DISSEM,  justification: "published to TAK Server · 14 EUD ack",minutes_ago: 110 }

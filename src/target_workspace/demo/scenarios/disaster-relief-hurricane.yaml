@@ -1,0 +1,216 @@
+# Disaster relief — hurricane response coordination
+# Demonstrates the malleability principle: no core code changes. Same engine,
+# different bundled columns + taxonomy. Models a county/state EOC running ICS
+# during initial response phase. Sample data only; place-names composite.
+
+name: "Hurricane Response · County EOC"
+workspace_name: "EPC OEM"
+
+board:
+  name: "Incident Response"
+  transitions: unrestricted
+  theme: ics
+  columns:
+    - { name: REPORTED,    order: 0 }
+    - { name: TRIAGED,     order: 1 }
+    - { name: ASSIGNED,    order: 2 }
+    - { name: IN_PROGRESS, order: 3, requires_approval: true }
+    - { name: RESOLVED,    order: 4 }
+
+targets:
+  # --- REPORTED (fresh incoming) ---
+  - name: "311-RPT-44218"
+    column_name: REPORTED
+    cot_type: a-u-G-I
+    lat: 29.7604
+    lon: -95.3698
+    minutes_ago: 3
+    custom_fields:
+      kind: "flooded street"
+      address: "1200 blk Allen Pkwy"
+      source: "311 caller"
+      priority: MED
+
+  - name: "RPT-44217"
+    column_name: REPORTED
+    cot_type: a-u-G-I
+    lat: 29.7522
+    lon: -95.4040
+    minutes_ago: 7
+    custom_fields:
+      kind: "medical · oxygen-dependent resident"
+      address: "Memorial Park nursing facility"
+      occupants: 18
+      priority: HIGH
+
+  - name: "RPT-44215"
+    column_name: REPORTED
+    cot_type: a-u-G-I
+    lat: 29.7280
+    lon: -95.3580
+    minutes_ago: 14
+    custom_fields:
+      kind: "downed power line · arcing"
+      address: "Almeda + Wheeler"
+      source: "patrol officer"
+      priority: HIGH
+
+  # --- TRIAGED (assessed) ---
+  - name: "INC-44210"
+    column_name: TRIAGED
+    cot_type: a-u-G-I
+    lat: 29.7700
+    lon: -95.3850
+    minutes_ago: 35
+    custom_fields:
+      kind: "shelter request · 80+ pax"
+      address: "George R Brown Convention Ctr"
+      ics_section: Operations
+      esf: "ESF-6 (Mass Care)"
+      priority: HIGH
+    transitions:
+      - { to_column: TRIAGED, justification: "Red Cross MOU activated", minutes_ago: 28 }
+
+  - name: "INC-44208"
+    column_name: TRIAGED
+    cot_type: a-u-G-I
+    lat: 29.7400
+    lon: -95.3500
+    minutes_ago: 42
+    custom_fields:
+      kind: "road impassable · 4ft inundation"
+      route: "I-45 N at Pierce"
+      ics_section: Operations
+      esf: "ESF-1 (Transportation)"
+      priority: HIGH
+    transitions:
+      - { to_column: TRIAGED, justification: "TxDOT crew dispatched", minutes_ago: 30 }
+
+  # --- ASSIGNED (team en route / staged) ---
+  # Area incident — flooded cul-de-sac with 8 isolated homes. Polygon
+  # geometry models the affected blocks, not a single point.
+  - name: "INC-FLOOD-AREA-A"
+    column_name: ASSIGNED
+    cot_type: a-f-G-U-C
+    lat: 29.7140
+    lon: -95.4205
+    minutes_ago: 82
+    geometry_kind: polygon
+    polygon_vertices:
+      - [29.7155, -95.4215]
+      - [29.7155, -95.4195]
+      - [29.7125, -95.4195]
+      - [29.7125, -95.4215]
+    custom_fields:
+      kind: "flood inundation area"
+      isolated_homes: 8
+      max_water_depth_m: 1.2
+      ics_section: Operations
+      esf: "ESF-9 (SAR)"
+      priority: CRITICAL
+
+  - name: "INC-44195"
+    column_name: ASSIGNED
+    cot_type: a-f-G-U-C
+    lat: 29.7150
+    lon: -95.4200
+    minutes_ago: 78
+    custom_fields:
+      kind: "search & rescue · cul-de-sac isolation"
+      address: "Brays Bayou south, 8 homes"
+      team: "Texas Task Force 1 · SQ-3"
+      ics_section: Operations
+      esf: "ESF-9 (SAR)"
+      priority: CRITICAL
+    transitions:
+      - { to_column: TRIAGED,  justification: "elevated water · families trapped on 2nd floor", minutes_ago: 70 }
+      - { to_column: ASSIGNED, justification: "TX-TF1 boat squad enroute, ETA 25 min",          minutes_ago: 48 }
+
+  - name: "INC-44188"
+    column_name: ASSIGNED
+    cot_type: a-f-G-U-C
+    lat: 29.7800
+    lon: -95.3300
+    minutes_ago: 95
+    custom_fields:
+      kind: "POD setup · water + MREs"
+      address: "Hermann Park staging"
+      team: "Salvation Army logistics"
+      ics_section: Logistics
+      esf: "ESF-7 (Resource Support)"
+      priority: MED
+    transitions:
+      - { to_column: TRIAGED,  justification: "siting approved by IC",  minutes_ago: 80 }
+      - { to_column: ASSIGNED, justification: "convoy departing depot", minutes_ago: 35 }
+
+  # --- IN_PROGRESS (active operations, approval-gated) ---
+  - name: "INC-44170"
+    column_name: IN_PROGRESS
+    cot_type: a-f-G-U-C
+    lat: 29.6900
+    lon: -95.4400
+    minutes_ago: 180
+    custom_fields:
+      kind: "evacuation · senior living"
+      address: "Bellaire Manor (96 residents)"
+      team: "EMS bus + paratransit"
+      ics_section: Operations
+      esf: "ESF-6 (Mass Care)"
+      priority: CRITICAL
+    transitions:
+      - { to_column: TRIAGED,     justification: "rising water + power loss",    minutes_ago: 160 }
+      - { to_column: ASSIGNED,    justification: "buses staged",                  minutes_ago: 120 }
+      - { to_column: IN_PROGRESS, justification: "first 24 evacuees moving",       minutes_ago: 95, approving_role: "OSC" }
+
+  - name: "INC-44156"
+    column_name: IN_PROGRESS
+    cot_type: a-f-G-U-C
+    lat: 29.7300
+    lon: -95.3900
+    minutes_ago: 240
+    custom_fields:
+      kind: "generator deployment · hospital"
+      address: "Texas Children's"
+      team: "USACE Engineer Det"
+      ics_section: Operations
+      esf: "ESF-3 (Public Works)"
+      priority: CRITICAL
+    transitions:
+      - { to_column: TRIAGED,     justification: "ATS failed on backup power",  minutes_ago: 220 }
+      - { to_column: ASSIGNED,    justification: "1.5 MW generator allocated",   minutes_ago: 180 }
+      - { to_column: IN_PROGRESS, justification: "USACE on-site, install start", minutes_ago: 140, approving_role: "Branch Director" }
+
+  # --- RESOLVED (closed in this op period) ---
+  - name: "INC-44102"
+    column_name: RESOLVED
+    cot_type: a-f-G-U-C
+    lat: 29.7600
+    lon: -95.3700
+    minutes_ago: 420
+    custom_fields:
+      kind: "medical extraction"
+      address: "Heights · 8th st"
+      disposition: "patient transported to Memorial · stable"
+      priority: HIGH
+    transitions:
+      - { to_column: TRIAGED,     justification: "dialysis pt · water rising",       minutes_ago: 400 }
+      - { to_column: ASSIGNED,    justification: "swift-water rescue team",          minutes_ago: 370 }
+      - { to_column: IN_PROGRESS, justification: "patient extracted via boat",       minutes_ago: 340, approving_role: "OSC" }
+      - { to_column: RESOLVED,    justification: "patient stable at receiving facility", minutes_ago: 300 }
+
+  - name: "INC-44090"
+    column_name: RESOLVED
+    cot_type: a-f-G-U-C
+    lat: 29.7500
+    lon: -95.4000
+    minutes_ago: 500
+    custom_fields:
+      kind: "POD distribution complete · day 1"
+      address: "Memorial Park PoD"
+      meals_distributed: 2400
+      water_cases: 800
+      priority: MED
+    transitions:
+      - { to_column: ASSIGNED,    justification: "convoy delivered, PoD opened",       minutes_ago: 480 }
+      - { to_column: IN_PROGRESS, justification: "distribution underway",              minutes_ago: 460, approving_role: "LSC" }
+      - { to_column: RESOLVED,    justification: "day-1 inventory exhausted; resupply scheduled", minutes_ago: 320 }

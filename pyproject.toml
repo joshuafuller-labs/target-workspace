@@ -1,0 +1,265 @@
+[project]
+name = "target-workspace"
+version = "0.1.0"
+description = "Configurable kanban for the target lifecycle. CoT-native, plugin-driven, malleable."
+readme = "README.md"
+requires-python = ">=3.13"
+authors = [{ name = "Joshua Fuller" }]
+license = { text = "MIT" }
+keywords = ["tak", "cot", "kanban", "workflow", "targeting"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Web Environment",
+    "Intended Audience :: Other Audience",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Communications",
+    "Typing :: Typed",
+]
+dependencies = [
+    # API + ASGI
+    "fastapi==0.136.1",
+    "uvicorn[standard]==0.47.0",
+    "starlette>=1.0.0,<1.1.0",
+    "python-multipart==0.0.28",
+    # Data + validation
+    "pydantic==2.13.4",
+    "pydantic-settings==2.14.1",
+    "sqlmodel==0.0.38",
+    "SQLAlchemy>=2.0.49,<2.1",
+    "alembic>=1.18.4,<1.19",
+    # Auth
+    "bcrypt==5.0.0",
+    "Authlib==1.7.2",
+    "cryptography>=48.0.0,<49",
+    # Logging + observability
+    "structlog>=25.5.0,<26",
+    "opentelemetry-api>=1.41.1,<1.42",
+    "opentelemetry-sdk>=1.41.1,<1.42",
+    "opentelemetry-exporter-otlp>=1.41.1,<1.42",
+    "opentelemetry-instrumentation-fastapi==0.62b1",
+    "opentelemetry-instrumentation-sqlalchemy==0.62b1",
+    # CoT
+    "pytak==7.2.1",
+    "takproto==3.0.1",
+    "email-validator>=2.2,<3",
+    "pyyaml>=6.0.3",
+    # httpx is a runtime dep (webhook_out Publisher uses it for outbound
+    # HTTP POST); historically lived in [dev] only because the test suite
+    # also exercises it, but it's required for production publish.
+    "httpx==0.28.1",
+    "defusedxml>=0.7.1",
+    "aiohttp>=3.14.0",  # >=3.14.0: floor above CVE-2026-34993 / CVE-2026-47265 (tw-qvdi.1)
+    # TAK Protocol over QUIC (UDP/8090 "takstream" input on TAK Server 5.x).
+    "aioquic>=1.3.0,<2",
+    "webauthn>=2.7,<3",
+    "psycopg[binary]>=3.2,<4",
+]
+
+[dependency-groups]
+dev = [
+    # Testing
+    "pytest>=9.0.3,<10",
+    "pytest-asyncio>=1.3.0,<2",
+    "pytest-cov>=7.1.0,<8",
+    "pytest-json-report>=1.5.0,<2",
+    "pytest-xdist>=3.8.0,<4",
+    "pytest-watcher>=0.6.3,<1",
+    "hypothesis>=6.152.7,<7",
+    "polyfactory>=3.3.0,<4",
+    "testcontainers>=4.14.2,<5",
+    "mutmut>=3.5.0,<4",
+    "diff-cover>=10.2.0,<11",
+    # Lint / type / security
+    "ruff>=0.15.12,<0.16",
+    "mypy>=2.1.0,<3",
+    "bandit[toml]>=1.9.4,<2",
+    "detect-secrets==1.5.0",
+    "pip-audit>=2.10.0,<3",
+    "pip-licenses>=5.0,<6",
+    # Workflow
+    "pre-commit>=4.6.0,<5",
+    "commitizen>=4.16.0,<5",
+    # Docs
+    "mkdocs-material>=9.5,<10",
+    "types-pyyaml>=6.0.12.20260510",
+    "types-defusedxml>=0.7.0.20260504",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/target_workspace"]
+
+# ---------------------------------------------------------------------------
+# Ruff — single tool for lint + format + import sort
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",     # pycodestyle errors
+    "F",     # pyflakes
+    "W",     # pycodestyle warnings
+    "I",     # isort
+    "B",     # flake8-bugbear
+    "UP",    # pyupgrade
+    "C4",    # flake8-comprehensions
+    "SIM",   # flake8-simplify
+    "PT",    # flake8-pytest-style
+    "RUF",   # ruff-specific
+    "S",     # flake8-bandit
+    "ASYNC", # async-correctness
+    "TRY",   # tryceratops (exception handling)
+    "LOG",   # logging discipline
+    "PL",    # pylint subset
+    "RET",   # return-statement hygiene
+    "PERF",  # perflint
+]
+ignore = [
+    "S101", # use of assert (we use it in tests)
+    "PLR0913", # too many arguments — Pydantic models legitimately have many
+    "B008",   # Depends() in arg defaults is the FastAPI idiom
+    "TRY003", # long exception messages are fine for HTTPException detail strings
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Test code: asserts + magic numbers, plus ad-hoc file opens, subprocess without
+# explicit check, lazy in-test imports, and compound asserts are all idiomatic.
+"tests/**" = ["S", "PLR2004", "SIM115", "PLW1510", "PLC0415", "PT018", "SIM105", "E501"]
+# Dev/CI audit scripts: trusted subprocess calls (git/uv on PATH), no explicit
+# check needed, and long embedded report strings.
+"scripts/**" = ["S", "PLW1510", "PLC0415", "E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+# ---------------------------------------------------------------------------
+# mypy — strict mode is non-negotiable
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.13"
+strict = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_return_any = true
+strict_equality = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["pytak.*", "takproto.*", "testcontainers.*", "aioquic.*"]
+ignore_missing_imports = true
+
+# Test code stays fully type-checked, but HTTP test helpers return
+# `response.json()` — which is `Any` by definition — so the warn_return_any
+# strictness is noise there. Everything else (untyped defs, etc.) still applies.
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+warn_return_any = false
+
+# ---------------------------------------------------------------------------
+# pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+minversion = "9.0"
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=target_workspace",
+    "--cov-branch",
+    "--cov-report=term-missing:skip-covered",
+    "--cov-report=xml",
+]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+filterwarnings = [
+    "error::ResourceWarning",
+    "error::pytest.PytestUnraisableExceptionWarning",
+]
+markers = [
+    "fast: fast unit tests run pre-commit and in PR (default)",
+    "integration: real Postgres/PostGIS via testcontainers (slow)",
+    "contract: plugin-contract conformance tests",
+    "slow: anything that touches the network or takes > 1s",
+]
+
+# ---------------------------------------------------------------------------
+# mutmut — mutation testing
+# ---------------------------------------------------------------------------
+# tw-7xk: mutmut 3.x runs pytest in-process and inherits the addopts
+# above (--cov=target_workspace + the 85% threshold via [tool.coverage.report]
+# fail_under). That makes every mutant fail for coverage reasons before
+# the behavioral test gates run.
+#
+# Fix: override the runner to invoke pytest with --no-cov + -m fast so
+# mutants are killed (or survive) based on behavioral correctness, not
+# coverage thresholds. The -m fast restriction keeps mutation runs
+# tractable — full integration sweep per mutant would take hours.
+[tool.mutmut]
+runner = "uv run pytest -m fast --no-cov -x -q"
+paths_to_mutate = ["src/target_workspace/"]
+
+# ---------------------------------------------------------------------------
+# Coverage
+# ---------------------------------------------------------------------------
+[tool.coverage.run]
+branch = true
+source = ["target_workspace"]
+omit = [
+    "*/tests/*",
+    "*/__about__.py",
+]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+skip_covered = true
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
+
+# ---------------------------------------------------------------------------
+# Bandit — security linter
+# ---------------------------------------------------------------------------
+[tool.bandit]
+# These B-rules are 1:1 redundant with Ruff's flake8-bandit (`S`) ruleset, which
+# is enforced repo-wide and carries per-line `# noqa` justifications for the
+# intentional cases (S104 CoT listener bind, S311 deterministic synthetic RNG,
+# S314 parsing via defusedxml, S108 temp-dir fallback). B105 on a
+# `must_change_password=True` flag is a false positive. Ruff is the source of
+# truth; skipping them in bandit avoids double-maintaining suppressions.
+skips = ["B101", "B104", "B105", "B108", "B311", "B405"]
+exclude_dirs = ["tests"]
+
+# ---------------------------------------------------------------------------
+# Commitizen — conventional commits enforcement
+# ---------------------------------------------------------------------------
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "v$version"
+version_scheme = "semver"
+version_provider = "pep621"
+update_changelog_on_bump = true
+
+# ---------------------------------------------------------------------------
+# uv
+# ---------------------------------------------------------------------------
+[tool.uv]
+required-version = ">=0.11.14"

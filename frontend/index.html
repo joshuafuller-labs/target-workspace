@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
+    <title>Target Workspace</title>
+    <!-- Cesium needs CESIUM_BASE_URL set BEFORE the bundle evaluates so
+         its internal asset resolver picks up our static-asset path
+         instead of falling back to "." (current directory). vite-plugin-
+         cesium does this via a Rollup intro, but Rolldown's intro lands
+         AFTER cesium's internal init in some import chains, leaving the
+         globe black. Setting it here is the belt-and-suspenders fix. -->
+    <script>window.CESIUM_BASE_URL = "/cesium/";</script>
+    <link rel="stylesheet" href="/cesium/Widgets/widgets.css">
+  </head>
+  <body class="bg-neutral-950 text-neutral-100">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

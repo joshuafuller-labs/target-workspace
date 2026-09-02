@@ -1,0 +1,182 @@
+# OSINT cross-correlation in disaster-ops (tw-haev).
+#
+# Companion scenario to disaster-kerr-flood.yaml. Exercises the
+# OSINT plugins (GDELT, USGS, NWS, RSS+NER+geocoder) end-to-end and
+# shows two doctrines:
+#
+#   1. Cross-source correlation: a GDELT-derived event and an
+#      operator-entered 911 welfare check at the same lat/lon fold
+#      into one target (tw-jpo track correlation).
+#   2. Negative evidence: a USGS earthquake feed running at the same
+#      time shows no nearby seismic activity, which an analyst uses
+#      as a sanity check ("the structural damage isn't seismic; it's
+#      flood erosion").
+#
+# All individuals fictional; the events composite.
+
+name: "Kerr County OSINT Correlation · Hill Country EOC"
+workspace_name: "Kerr OEM · OSINT cell"
+
+board:
+  name: "OSINT Correlation · Op Period 1"
+  transitions: unrestricted
+  theme: ics
+  columns:
+    - { name: REPORTED,        order: 0 }
+    - { name: CORRELATED,      order: 1 }
+    - { name: ACTIONED,        order: 2 }
+    - { name: ARCHIVED,        order: 3 }
+
+targets:
+  # ──────────────────────────────────────────────────────────────────
+  # REPORTED — raw intake from OSINT feeds + 911.
+  # ──────────────────────────────────────────────────────────────────
+
+  # Operator-entered 911 welfare check. Coordinates match a later
+  # GDELT row → the correlation engine should merge.
+  - name: "911-WELFARE-KERR-0073"
+    column_name: REPORTED
+    cot_type: a-u-G-I
+    lat: 30.0413
+    lon: -99.1450
+    minutes_ago: 22
+    source: "911 dispatch"
+    custom_fields:
+      kind: "person · welfare check"
+      caller: "neighbor (Boerne TX)"
+      caller_phone: "***-***-9921"
+      site: "Kerrville · 1200 block of Sidney Baker"
+      priority: HIGH
+
+  # GDELT row landing 4 minutes later for the same lat/lon. tw-jpo
+  # correlation should fold this into 911-WELFARE-KERR-0073.
+  - name: "GDELT-Kerrville-flooding"
+    column_name: REPORTED
+    cot_type: a-u-G-I
+    lat: 30.0413
+    lon: -99.1450
+    minutes_ago: 18
+    source: "https://example-news.com/kerrville-flooding-2026"
+    custom_fields:
+      kind: "osint · curated event"
+      cameo_code: "0871"
+      goldstein_scale: -3.5
+      actor1: "Citizens of Kerrville"
+      actor2: "Local Authorities"
+      place: "Kerrville, Texas, USA"
+      sql_date: "20260518"
+      duplicate_of_hint: "911-WELFARE-KERR-0073"
+
+  # NWS active flood-warning polygon. Overlaps the Camp Mystic AOI
+  # in disaster-kerr-flood.yaml so a multi-board view shows both.
+  - name: "NWS-FloodWarning-KerrCo"
+    column_name: REPORTED
+    cot_type: a-h-G-I
+    lat: 30.0250
+    lon: -99.3700
+    minutes_ago: 12
+    geometry_kind: polygon
+    polygon_vertices:
+      - [30.0050, -99.4090]
+      - [30.0050, -99.3300]
+      - [30.0500, -99.3300]
+      - [30.0500, -99.4090]
+    source: "NWS Greenville-Spartanburg SC"
+    custom_fields:
+      kind: "alert · flood warning"
+      event: "Flood Warning"
+      severity: "Severe"
+      urgency: "Immediate"
+      certainty: "Observed"
+      area: "Kerr County, Texas"
+      effective: "2026-05-18T14:00:00-05:00"
+      ends: "2026-05-19T02:00:00-05:00"
+      overlaps_aoi: "Camp Mystic"
+
+  # Negative-evidence row from USGS. M0.7 at 480km depth half a
+  # continent away — listed for context so an analyst sees "no
+  # nearby seismic activity" instead of inferring its absence.
+  - name: "USGS-NoNearbyQuake"
+    column_name: REPORTED
+    cot_type: a-h-G-I
+    lat: 27.5
+    lon: -111.0
+    minutes_ago: 8
+    source: "https://earthquake.usgs.gov/earthquakes/eventpage/usgs-sanity"
+    custom_fields:
+      kind: "osint · negative evidence"
+      magnitude: 0.7
+      depth_km: 480.0
+      place: "Sea of Cortez, MX (no impact)"
+      tsunami: 0
+      felt: 0
+      analyst_note: "structural damage in scope is flood, not seismic"
+
+  # RSS+NER row (tw-6cbo). News article mentions a swift-water
+  # rescue at the river-walk RV park (already in the disaster
+  # scenario as EVAC-HUNT-RV-PARK at 30.0683, -99.3469).
+  - name: "RSS-HuntRiverWalk-Rescue"
+    column_name: REPORTED
+    cot_type: a-u-G-I
+    lat: 30.0683
+    lon: -99.3469
+    minutes_ago: 5
+    source: "https://example-news.com/hunt-river-walk-rescue-2026"
+    custom_fields:
+      kind: "osint · news article"
+      headline: "Boats deployed at Hunt River Walk as Guadalupe crests"
+      entities: ["Hunt", "Guadalupe River", "Kerr Sheriff", "Texas Task Force 1"]
+      published: "2026-05-18T18:00:00-05:00"
+      duplicate_of_hint: "EVAC-HUNT-RV-PARK (cross-board)"
+
+  # ──────────────────────────────────────────────────────────────────
+  # CORRELATED — same physical event, multiple sources reconciled.
+  # ──────────────────────────────────────────────────────────────────
+
+  - name: "CORR-KERRVILLE-FLOODING"
+    column_name: CORRELATED
+    cot_type: a-h-G-I
+    lat: 30.0413
+    lon: -99.1450
+    minutes_ago: 14
+    custom_fields:
+      kind: "correlated · multi-source"
+      merged_from: ["911-WELFARE-KERR-0073", "GDELT-Kerrville-flooding"]
+      confidence: 0.92
+      analyst_note: "GDELT and 911 caller agree on impact; flood-warning polygon covers AOI"
+    transitions:
+      - { to_column: CORRELATED, justification: "GDELT row matched 911 welfare check on lat/lon; merged", minutes_ago: 12 }
+
+  # ──────────────────────────────────────────────────────────────────
+  # ACTIONED — OSINT analysis fed an operational decision elsewhere.
+  # ──────────────────────────────────────────────────────────────────
+
+  - name: "ACTION-PUSHED-TO-OPS"
+    column_name: ACTIONED
+    cot_type: a-f-G-I
+    lat: 30.0683
+    lon: -99.3469
+    minutes_ago: 4
+    custom_fields:
+      kind: "handoff · OSINT → Ops"
+      handoff_to_board: "Incident Response · Op Period 1"
+      handoff_target: "EVAC-HUNT-RV-PARK"
+      analyst_note: "RSS-confirmed scope of evacuation; ops upgraded priority from HIGH → CRITICAL"
+    transitions:
+      - { to_column: ACTIONED, justification: "RSS article corroborated dispatcher report; pushed", minutes_ago: 2 }
+
+  # ──────────────────────────────────────────────────────────────────
+  # ARCHIVED — kept for after-action / FOIA / lessons-learned.
+  # ──────────────────────────────────────────────────────────────────
+
+  - name: "ARCHIVE-USGS-NEGATIVE"
+    column_name: ARCHIVED
+    cot_type: a-h-G-I
+    lat: 27.5
+    lon: -111.0
+    minutes_ago: 3
+    custom_fields:
+      kind: "archive · negative evidence"
+      analyst_note: "USGS clean across op period — flood etiology confirmed for after-action"
+    transitions:
+      - { to_column: ARCHIVED, justification: "no nearby seismic activity for the op-period window", minutes_ago: 1 }

@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Target Workspace — State/Local · SAR (Mockup)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #14171c;
+    --bg-2: #1a1d23;
+    --panel: #232830;
+    --panel-2: #2a2f39;
+    --line: #353c48;
+    --line-2: #4a5260;
+    --ink: #ffffff;
+    --ink-dim: #b5bcc7;
+    --ink-faint: #7b8290;
+
+    --hi-orange: #ff6a3d;
+    --hi-orange-2: #ff8a5e;
+    --hi-yellow: #fbd23d;
+    --hi-yellow-2: #ffe06b;
+    --hi-green: #2ecc71;
+    --hi-green-2: #5eda8f;
+    --crit: #e63946;
+    --crit-2: #f25c63;
+    --water: #4ecdc4;
+    --water-2: #7adcd5;
+    --night: #4d6fa8;
+  }
+  html, body {
+    background: var(--bg); color: var(--ink);
+    font-family: 'Outfit', system-ui, sans-serif;
+    font-feature-settings: 'ss01';
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(1200px 600px at 20% 110%, rgba(255,106,61,0.06), transparent 60%),
+      radial-gradient(900px 500px at 90% -10%, rgba(251,210,61,0.05), transparent 60%);
+  }
+  .display { font-family: 'Big Shoulders Display', 'Outfit', sans-serif; letter-spacing: 0.04em; }
+  .mono    { font-family: 'DM Mono', ui-monospace, monospace; }
+
+  .panel  { background: var(--panel); border: 1px solid var(--line); }
+  .panel-2{ background: var(--panel-2); border: 1px solid var(--line); }
+  .hairline { border-color: var(--line); }
+  .hairline-2 { border-color: var(--line-2); }
+  .ink-dim   { color: var(--ink-dim); }
+  .ink-faint { color: var(--ink-faint); }
+
+  /* Hi-vis banner */
+  .hivis-band {
+    background: repeating-linear-gradient(135deg, var(--hi-yellow) 0 22px, #2a2f39 22px 38px);
+    color: #111; letter-spacing: 0.24em; font-weight: 800;
+    border-top: 2px solid #111; border-bottom: 2px solid #111;
+  }
+
+  .chip { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:2px; font-size:11px; font-weight:700; line-height:18px; letter-spacing:0.06em; text-transform: uppercase; font-family:'Outfit', sans-serif; }
+  .chip-dim    { background: rgba(255,255,255,0.05); color: var(--ink-dim); border: 1px solid var(--line-2); }
+  .chip-orange { background: var(--hi-orange); color: #1a0d05; }
+  .chip-orange-out { background: transparent; color: var(--hi-orange); border: 1px solid var(--hi-orange); }
+  .chip-yellow { background: var(--hi-yellow); color: #1a1505; }
+  .chip-green  { background: var(--hi-green); color: #062612; }
+  .chip-green-out { background: transparent; color: var(--hi-green); border: 1px solid var(--hi-green); }
+  .chip-crit   { background: var(--crit); color: #fff; }
+  .chip-crit-out{ background: transparent; color: var(--crit-2); border: 1px solid var(--crit); }
+  .chip-water  { background: var(--water); color: #062420; }
+  .chip-night  { background: var(--night); color: #0d1424; }
+
+  /* Mission cards */
+  .lead {
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--ink-faint);
+    transition: transform 120ms ease, border-color 120ms ease;
+  }
+  .lead.priority { border-left-color: var(--hi-orange); }
+  .lead.high     { border-left-color: var(--crit); animation: pulseLead 2s ease-in-out infinite; }
+  .lead.cleared  { border-left-color: var(--hi-green); opacity: 0.85; }
+  @keyframes pulseLead {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(230,57,70,0.0); }
+    50% { box-shadow: 0 0 0 2px rgba(230,57,70,0.25); }
+  }
+
+  /* Big timer */
+  .clock {
+    font-family: 'Big Shoulders Display', sans-serif;
+    font-weight: 800; font-feature-settings: 'tnum';
+    line-height: 0.95;
+    background: linear-gradient(180deg, #ffffff, #cfd3dd);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .clock-crit {
+    background: linear-gradient(180deg, var(--crit-2), var(--crit));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .clock-warn {
+    background: linear-gradient(180deg, var(--hi-yellow-2), #ffb635);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+
+  /* Column heads */
+  .col-head {
+    background: linear-gradient(180deg, #262b34, #1d2129);
+    border: 1px solid var(--line);
+    border-bottom: 0;
+    padding: 10px 12px;
+  }
+  .col-name { font-family:'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 18px; letter-spacing: 0.06em; }
+  .col-body { background: rgba(0,0,0,0.16); border: 1px solid var(--line); border-top: 0; min-height: 60vh; }
+
+  /* Team block */
+  .teamblock {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 10px 12px;
+    position: relative;
+  }
+  .teamblock::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  }
+  .teamblock.ground::before { background: var(--hi-orange); }
+  .teamblock.k9::before     { background: var(--hi-yellow); }
+  .teamblock.air::before    { background: var(--water); }
+  .teamblock.heli::before   { background: var(--night); }
+  .teamblock.medical::before{ background: var(--crit); }
+
+  /* SAR map */
+  .sarmap {
+    position: relative;
+    background:
+      radial-gradient(900px 500px at 50% 60%, rgba(255,106,61,0.06), transparent 70%),
+      conic-gradient(from 0deg at 50% 60%, rgba(46,204,113,0.05) 0deg, transparent 25deg, transparent 90deg, rgba(46,204,113,0.04) 110deg, transparent 130deg),
+      linear-gradient(rgba(180,180,200,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(180,180,200,0.05) 1px, transparent 1px),
+      #14181f;
+    background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .sarmap .seg {
+    position: absolute; border: 1.5px dashed var(--hi-orange);
+    background: rgba(255,106,61,0.08);
+    color: var(--hi-orange-2); font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.06em;
+    padding: 4px 6px;
+  }
+  .sarmap .seg.cleared {
+    border-color: var(--hi-green); background: rgba(46,204,113,0.08); color: var(--hi-green-2);
+  }
+  .sarmap .seg.searching {
+    border-color: var(--hi-yellow); background: rgba(251,210,61,0.10); color: var(--hi-yellow-2);
+    animation: blink 1.5s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.55} }
+  .sarmap .ipp {
+    position: absolute; transform: translate(-50%,-50%);
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--crit); border: 3px solid #fff;
+    box-shadow: 0 0 0 6px rgba(230,57,70,0.18);
+  }
+  .sarmap .ipp::after {
+    content: 'IPP'; position: absolute; left: 22px; top: -2px; color: var(--crit-2);
+    font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 13px;
+  }
+  .sarmap .marker { position:absolute; transform:translate(-50%,-50%); }
+  .sarmap .marker .pinDot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; }
+  .sarmap .marker .pinLabel { color: var(--ink); font-family: 'DM Mono', monospace; font-size: 10px; margin-top: 2px; white-space: nowrap; text-shadow: 0 1px 2px #000; }
+  .sarmap .marker.team .pinDot { background: var(--hi-orange); }
+  .sarmap .marker.k9 .pinDot   { background: var(--hi-yellow); }
+  .sarmap .marker.drone .pinDot{ background: var(--water); }
+  .sarmap .marker.heli .pinDot { background: var(--night); }
+  .sarmap .marker.cue .pinDot  { background: var(--hi-green); }
+
+  /* Tooltip */
+  [data-tip] { position: relative; }
+  .tt {
+    position: fixed; z-index: 80; pointer-events: none; max-width: 340px;
+    background: #0e1116; color: var(--ink);
+    border: 1px solid var(--line-2); border-radius: 3px;
+    padding: 10px 12px; font-size: 12px; line-height: 1.5;
+    box-shadow: 0 14px 36px rgba(0,0,0,0.55);
+    opacity: 0; transform: translateY(2px); transition: opacity 120ms ease, transform 120ms ease;
+  }
+  .tt.show { opacity: 1; transform: translateY(0); }
+  .tt .tt-title { font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 14px; color: var(--hi-orange-2); margin-bottom: 4px; letter-spacing: 0.04em; text-transform: uppercase; }
+
+  /* Buttons */
+  .btn { display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 14px; border-radius:3px; font-size:13px; font-weight:700; border:1px solid var(--line-2); background: var(--panel-2); color: var(--ink); font-family: 'Outfit', sans-serif; letter-spacing: 0.02em; }
+  .btn:hover { background: #353c4a; }
+  .btn-orange { background: var(--hi-orange); border-color: var(--hi-orange); color: #1a0d05; }
+  .btn-orange:hover { background: var(--hi-orange-2); }
+  .btn-green { background: var(--hi-green); border-color: var(--hi-green); color: #062612; }
+  .btn-crit  { background: var(--crit); border-color: var(--crit); color: #fff; }
+  .btn-ghost { background: transparent; border-color: var(--line); color: var(--ink-dim); }
+
+  .kbd { display:inline-flex; align-items:center; justify-content:center; min-width:20px; height:20px; padding:0 5px; border:1px solid var(--line-2); border-bottom-width:2px; border-radius:3px; background: var(--panel); color: var(--ink-dim); font-family: 'DM Mono', monospace; font-size:10px; }
+
+  /* Bar meter */
+  .bar { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+  .bar > span { display:block; height: 100%; }
+  .bar.green > span { background: var(--hi-green); }
+  .bar.orange > span{ background: var(--hi-orange); }
+  .bar.crit > span  { background: var(--crit); }
+  .bar.water > span { background: var(--water); }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  .ic { width: 16px; height: 16px; stroke-width: 2; }
+  a:focus, button:focus, [tabindex]:focus { outline: 2px solid var(--hi-orange); outline-offset: 2px; }
+</style>
+</head>
+<body class="min-h-screen relative">
+
+<!-- Hi-vis caution band -->
+<div class="hivis-band text-[10px] text-center py-[4px]">SEARCH AND RESCUE OPERATIONS · ACTIVE MISSION · DEMONSTRATION DATA</div>
+
+<!-- TOP MISSION BANNER -->
+<header class="relative z-10 px-4 pt-3 pb-4" style="background: linear-gradient(180deg, #1a1d23, #14171c);">
+  <div class="flex items-start gap-5">
+
+    <!-- Mission ID block -->
+    <div>
+      <div class="display text-[11px] tracking-[0.32em] uppercase ink-dim">Active Mission</div>
+      <div class="display text-[32px] font-extrabold leading-none mt-1">SAR · 2026-05-16-001</div>
+      <div class="text-[14px] mt-1 ink-dim">Missing hiker · 47-yr-old male · last seen <span class="text-white font-semibold">11:30 MDT</span> · Manitou Inc Trailhead</div>
+    </div>
+
+    <div class="h-12 w-px border-l hairline-2"></div>
+
+    <!-- BIG MISSION CLOCK -->
+    <div class="flex items-baseline gap-6">
+      <div data-tip="elapsed" data-tip-title="Mission elapsed" data-tip-body="Time since mission activation. Start: 11:45 MDT.">
+        <div class="display text-[10px] tracking-[0.32em] uppercase ink-dim">Elapsed</div>
+        <div class="clock text-[44px] mono">04:00:23</div>
+      </div>
+
+      <div data-tip="sunset" data-tip-title="Sunset countdown"
+           data-tip-body="Operational daylight remaining. Mission tempo shifts to nightfall ops at T-30 min. NWS sunset: 19:45 MDT.">
+        <div class="display text-[10px] tracking-[0.32em] uppercase ink-dim flex items-center gap-1">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>
+          Sunset
+        </div>
+        <div class="clock clock-warn text-[44px] mono">03:59:37</div>
+      </div>
+
+      <div data-tip="lkp" data-tip-title="Last known position (LKP)"
+           data-tip-body="GPS-traced footprint at Manitou Inc Trail · 11:30 MDT · waypoint MIT-7.">
+        <div class="display text-[10px] tracking-[0.32em] uppercase ink-dim">LKP age</div>
+        <div class="clock text-[44px] mono">04:15:00</div>
+      </div>
+
+      <div data-tip="weather" data-tip-title="On-scene weather (NWS)"
+           data-tip-body="Wind 8 mph SW · Vis 4 mi · Temp 58°F · Ceiling 11k ft · Front 22:00.">
+        <div class="display text-[10px] tracking-[0.32em] uppercase ink-dim">Weather</div>
+        <div class="mt-1 text-[15px]"><span class="font-bold">8 mph SW</span> · 58°F · <span class="ink-dim">vis 4mi</span></div>
+        <div class="mt-0.5 mono text-[11px] ink-dim">FRONT 22:00 · RAIN PROB 30%</div>
+      </div>
+    </div>
+
+    <div class="ml-auto flex flex-col items-end gap-2">
+      <div class="flex items-center gap-2">
+        <button class="btn btn-orange" data-tip="newcue" data-tip-title="Log new cue / sighting"
+                data-tip-body="Opens cue intake form. Captures source, location, time, photo, confidence.">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
+          New Cue <span class="kbd ml-1">N</span>
+        </button>
+        <button class="btn" data-tip="brief" data-tip-title="Update operations brief"
+                data-tip-body="Pushes an OPS-update to all assigned teams via mesh radio + TAK.">Update Brief</button>
+        <button class="btn btn-crit" data-tip="urgent" data-tip-title="Escalate to URGENT"
+                data-tip-body="Triggers night-ops protocol, requests mutual aid, notifies sheriff IC.">URGENT</button>
+      </div>
+
+      <div class="flex items-center gap-2 pl-2 border-l hairline">
+        <div class="w-9 h-9 rounded grid place-items-center text-[12px] font-extrabold"
+             style="background: var(--hi-orange); color: #1a0d05;">DC</div>
+        <div class="leading-tight">
+          <div class="text-[13px] font-bold">Diana Chen</div>
+          <div class="text-[10.5px] ink-faint mono">EL PASO CTY OEM · SAR COORD</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+
+<!-- SUB-CONTROLS -->
+<div class="relative z-10 px-4 py-2 border-y hairline flex items-center gap-2 text-[12.5px]" style="background: #0f1217;">
+  <span class="display text-[10px] tracking-[0.32em] uppercase ink-dim mr-1">Board</span>
+  <button class="btn btn-orange" data-tip="board-sar" data-tip-title="SAR board template"
+          data-tip-body="Report → Triage → Assign → Search → Resolved · pre-built for missing person.">SAR · MISSING PERSON</button>
+  <button class="btn btn-ghost">SWAT</button>
+  <button class="btn btn-ghost">EOC INCIDENT</button>
+
+  <span class="h-5 w-px border-l hairline-2 mx-1"></span>
+
+  <span class="display text-[10px] tracking-[0.32em] uppercase ink-dim mr-1">Filter</span>
+  <button class="btn btn-ghost">Sources · 5</button>
+  <button class="btn btn-ghost">Priority ≥ MED</button>
+  <button class="btn btn-ghost">Segments · 9</button>
+
+  <div class="ml-auto flex items-center gap-2 text-[12px] mono">
+    <span class="chip chip-green">CoT LIVE · 23 EUD</span>
+    <span class="chip chip-water">DRONE · BAT 62%</span>
+    <span class="chip chip-night">HELO ETA · 0:12</span>
+  </div>
+</div>
+
+<!-- MAIN GRID -->
+<main class="relative z-10 grid grid-cols-[280px_minmax(0,1fr)_420px] gap-3 px-3 pt-3">
+
+  <!-- LEFT: TEAM ROSTER -->
+  <aside class="space-y-3">
+
+    <div class="panel">
+      <div class="px-3 py-2 flex items-center justify-between border-b hairline">
+        <div class="display text-[18px] font-extrabold tracking-wider">TEAM ROSTER</div>
+        <span class="chip chip-orange-out mono">5 ACTIVE</span>
+      </div>
+
+      <div class="p-2 space-y-2">
+
+        <div class="teamblock ground" data-tip="team-alpha" data-tip-title="TEAM ALPHA · ground"
+             data-tip-body="4 PAX · segment A4 · comms OK · pace 1.8 mph · last fix 21:43 MDT.">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="display text-[16px] font-extrabold leading-none">ALPHA</div>
+              <div class="text-[11px] mono ink-dim">GROUND · 4 PAX</div>
+            </div>
+            <span class="chip chip-orange mono">SEG A4</span>
+          </div>
+          <div class="mt-2 flex items-center justify-between text-[11px] mono">
+            <span class="text-white">ON TASK 1:23</span>
+            <span class="ink-dim">comms ✓ · battery 84%</span>
+          </div>
+          <div class="bar green mt-1.5"><span style="width: 62%"></span></div>
+        </div>
+
+        <div class="teamblock ground" data-tip="team-bravo" data-tip-title="TEAM BRAVO · ground"
+             data-tip-body="3 PAX · segment A2 · intermittent comms · last fix 21:38 MDT.">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="display text-[16px] font-extrabold leading-none">BRAVO</div>
+              <div class="text-[11px] mono ink-dim">GROUND · 3 PAX</div>
+            </div>
+            <span class="chip chip-orange mono">SEG A2</span>
+          </div>
+          <div class="mt-2 flex items-center justify-between text-[11px] mono">
+            <span class="text-white">ON TASK 1:45</span>
+            <span style="color: var(--hi-yellow-2);">comms ⚠ · 71%</span>
+          </div>
+          <div class="bar orange mt-1.5"><span style="width: 78%"></span></div>
+        </div>
+
+        <div class="teamblock k9" data-tip="team-k9" data-tip-title="K9-1 · track team"
+             data-tip-body="K9 Atlas + Handler S. Vega · wind 8mph SW · drift 5° · last alert 21:39.">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="display text-[16px] font-extrabold leading-none">K9-1 <span class="ink-faint">ATLAS</span></div>
+              <div class="text-[11px] mono ink-dim">K9 · TRACK · 47 MIN</div>
+            </div>
+            <span class="chip chip-yellow mono">SEG A3</span>
+          </div>
+          <div class="mt-2 flex items-center justify-between text-[11px] mono">
+            <span class="text-white">DRIFT 5° W</span>
+            <span class="ink-dim">handler S. Vega</span>
+          </div>
+        </div>
+
+        <div class="teamblock air" data-tip="team-drone" data-tip-title="AIR-1 · DJI Mavic 3T"
+             data-tip-body="Pilot R. Holcomb · sector survey · battery 62% · RTH at 25%.">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="display text-[16px] font-extrabold leading-none">AIR-1</div>
+              <div class="text-[11px] mono ink-dim">DRONE · MAVIC 3T · IR</div>
+            </div>
+            <span class="chip chip-water mono">SECTOR SWEEP</span>
+          </div>
+          <div class="mt-2 flex items-center justify-between text-[11px] mono">
+            <span class="text-white">BAT 62%</span>
+            <span class="ink-dim">alt 320ft AGL · 11 cues</span>
+          </div>
+          <div class="bar water mt-1.5"><span style="width: 62%"></span></div>
+        </div>
+
+        <div class="teamblock heli" data-tip="team-helo" data-tip-title="AIR-2 · Sheriff helo"
+             data-tip-body="EPSO Aviation 1 · diverted 21:30 · ETA 0:12 · FLIR equipped.">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="display text-[16px] font-extrabold leading-none">AIR-2</div>
+              <div class="text-[11px] mono ink-dim">HELO · EPSO AV1 · FLIR</div>
+            </div>
+            <span class="chip chip-night mono">ETA 0:12</span>
+          </div>
+          <div class="mt-2 flex items-center justify-between text-[11px] mono">
+            <span class="text-white">INBOUND</span>
+            <span class="ink-dim">freq · TAC-3</span>
+          </div>
+        </div>
+
+        <div class="teamblock medical" data-tip="team-med" data-tip-title="MED-1 · medical staging"
+             data-tip-body="Medic 14 · staged at trailhead · ALS team · 1 ambulance, 1 ATV.">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="display text-[16px] font-extrabold leading-none">MED-1</div>
+              <div class="text-[11px] mono ink-dim">EMS · STAGED · ALS</div>
+            </div>
+            <span class="chip chip-crit-out mono">STANDBY</span>
+          </div>
+          <div class="mt-2 flex items-center justify-between text-[11px] mono">
+            <span class="text-white">READY</span>
+            <span class="ink-dim">trailhead · 0 calls</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- CENTER: SAR board -->
+  <section>
+    <div class="grid grid-cols-5 gap-2">
+
+      <!-- REPORT -->
+      <div>
+        <div class="col-head flex items-center justify-between" data-tip="col-rep" data-tip-title="REPORT"
+             data-tip-body="Incoming tips, sightings, drone hits. Not yet triaged.">
+          <span class="col-name">REPORT</span>
+          <span class="chip chip-dim mono">5</span>
+        </div>
+        <div class="col-body p-2 space-y-2">
+          <article class="lead p-2.5" data-tip="r1" data-tip-title="Drone IR cue · warm signature">
+            <div class="flex items-center justify-between mb-1">
+              <span class="chip chip-water mono">DRONE IR</span>
+              <span class="mono text-[10px] ink-faint">21:43 MDT</span>
+            </div>
+            <div class="text-[13px] font-bold leading-tight">Warm signature · north ridge</div>
+            <div class="mono text-[10.5px] ink-dim mt-1">38.85912 N, 105.04188 W</div>
+            <div class="flex items-center justify-between mt-2 text-[11px]">
+              <span class="chip chip-orange-out mono">CV 0.74</span>
+              <span class="ink-dim mono">+ 2 min</span>
+            </div>
+          </article>
+
+          <article class="lead p-2.5" data-tip="r2">
+            <div class="flex items-center justify-between mb-1">
+              <span class="chip chip-yellow mono">TIP</span>
+              <span class="mono text-[10px] ink-faint">21:36 MDT</span>
+            </div>
+            <div class="text-[13px] font-bold leading-tight">Hiker reports orange jacket sighting</div>
+            <div class="mono text-[10.5px] ink-dim mt-1">trail spur 7B · approx 1.2 mi N of IPP</div>
+            <div class="flex items-center justify-between mt-2 text-[11px]">
+              <span class="chip chip-dim mono">UNVERIFIED</span>
+              <span class="ink-dim mono">+ 9 min</span>
+            </div>
+          </article>
+
+          <article class="lead p-2.5" data-tip="r3">
+            <div class="flex items-center justify-between mb-1">
+              <span class="chip chip-night mono">CELL PING</span>
+              <span class="mono text-[10px] ink-faint">21:22 MDT</span>
+            </div>
+            <div class="text-[13px] font-bold leading-tight">Carrier ping · subject's phone</div>
+            <div class="mono text-[10.5px] ink-dim mt-1">tower MNT-3 · accuracy ~480m</div>
+            <div class="flex items-center justify-between mt-2 text-[11px]">
+              <span class="chip chip-orange-out mono">LOW CONF</span>
+              <span class="ink-dim mono">+ 23 min</span>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <!-- TRIAGE -->
+      <div>
+        <div class="col-head flex items-center justify-between" data-tip="col-tr" data-tip-title="TRIAGE"
+             data-tip-body="Coordinator review. Assign segments, request resources, or push back to REPORT.">
+          <span class="col-name">TRIAGE</span>
+          <span class="chip chip-dim mono">3</span>
+        </div>
+        <div class="col-body p-2 space-y-2">
+          <article class="lead priority p-2.5" data-tip="t1" data-tip-title="Cue assigned to BRAVO">
+            <div class="flex items-center justify-between mb-1">
+              <span class="chip chip-water mono">DRONE</span>
+              <span class="mono text-[10px] ink-faint">21:20</span>
+            </div>
+            <div class="text-[13px] font-bold leading-tight">Possible track · drainage E</div>
+            <div class="mono text-[10.5px] ink-dim mt-1">SEG A2 · suggested</div>
+            <div class="flex items-center justify-between mt-2 text-[11px]">
+              <span class="chip chip-yellow mono">MED PRIO</span>
+              <span class="ink-dim mono">+ 25 min</span>
+            </div>
+          </article>
+
+          <article class="lead p-2.5" data-tip="t2">
+            <div class="flex items-center justify-between mb-1">
+              <span class="chip chip-yellow mono">TIP</span>
+              <span class="mono text-[10px] ink-faint">21:08</span>
+            </div>
+            <div class="text-[13px] font-bold leading-tight">Driver passed hiker on FR-380</div>
+            <div class="mono text-[10.5px] ink-dim mt-1">FR-380 mile 4.2 · 2h prior</div>
+            <div class="flex items-center justify-between mt-2 text-[11px]">
+              <span class="chip chip-dim mono">CORROB?</span>
+              <span class="ink-dim mono">+ 37 min</span>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <!-- ASSIGN -->
+      <div>
+        <div class="col-head flex items-center justify-between" data-tip="col-as" data-tip-title="ASSIGN"
+             data-tip-body="Team assignments cued; awaiting acknowledgement.">
+          <span class="col-name">ASSIGN</span>
+          <span class="chip chip-dim mono">2</span>
+        </div>
+        <div class="col-body p-2 space-y-2">
+          <article class="lead priority p-2.5" data-tip="a1" data-tip-title="ALPHA assigned · awaiting ack">
+            <div class="flex items-center justify-between mb-1">
+              <span class="chip chip-orange mono">→ ALPHA</span>
+              <span class="mono text-[10px] ink-faint">21:31</span>
+            </div>
+            <div class="text-[13px] font-bold leading-tight">Sweep segment A4 (E ridge)</div>
+            <div class="mono text-[10.5px] ink-dim mt-1">SEG A4 · 0.62 sq mi</div>
+            <div class="flex items-center justify-between mt-2 text-[11px]">
+              <span class="chip chip-yellow mono">ACK PEND</span>
+              <span class="ink-dim mono">+ 14 min</span>
+            </div>
+          </article>
+          <article class="lead p-2.5" data-tip="a2">
+            <div class="flex items-center justify-between mb-1">
+              <span class="chip chip-yellow mono">→ K9-1</span>
+              <span class="mono text-[10px] ink-faint">21:26</span>
+            </div>
+            <div class="text-[13px] font-bold leading-tight">Track from LKP · NW drift</div>
+            <div class="mono text-[10.5px] ink-dim mt-1">SEG A3 · scent box</div>
+            <div class="flex items-center justify-between mt-2 text-[11px]">
+              <span class="chip chip-green-out mono">EN ROUTE</span>
+              <span class="ink-dim mono">+ 19 min</span>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <!-- SEARCH -->
+      <div>
+        <div class="col-head flex items-center justify-between" data-tip="col-sr" data-tip-title="SEARCH"
+             data-tip-body="Active search in progress. Live CoT broadcast to all EUDs.">
+          <span class="col-name" style="color: var(--hi-orange);">SEARCH</span>
+          <span class="chip chip-orange mono">2 LIVE</span>
+        </div>
+        <div class="col-body p-2 space-y-2">
+          <article class="lead high p-2.5" data-tip="s1" data-tip-title="BRAVO actively searching A2"
+                   data-tip-body="High-priority drainage sweep. Comms intermittent — fallback runner to A2 standby.">
+            <div class="flex items-center justify-between mb-1">
+              <span class="chip chip-crit mono">SEARCHING</span>
+              <span class="mono text-[10px] ink-faint">21:38</span>
+            </div>
+            <div class="text-[13px] font-bold leading-tight">BRAVO · drainage E · seg A2</div>
+            <div class="mono text-[10.5px] ink-dim mt-1">progress 78% · pace 1.4 mph</div>
+            <div class="bar orange mt-1.5"><span style="width: 78%"></span></div>
+            <div class="flex items-center justify-between mt-2 text-[11px]">
+              <span class="chip chip-yellow mono">COMMS ⚠</span>
+              <button class="btn btn-orange text-[11px] py-0">CALL OUT</button>
+            </div>
+          </article>
+
+          <article class="lead p-2.5" data-tip="s2">
+            <div class="flex items-center justify-between mb-1">
+              <span class="chip chip-orange mono">SEARCHING</span>
+              <span class="mono text-[10px] ink-faint">20:45</span>
+            </div>
+            <div class="text-[13px] font-bold leading-tight">AIR-1 · sector NW grid sweep</div>
+            <div class="mono text-[10.5px] ink-dim mt-1">progress 41% · IR enabled · BAT 62%</div>
+            <div class="bar water mt-1.5"><span style="width: 41%"></span></div>
+            <div class="flex items-center justify-between mt-2 text-[11px]">
+              <span class="chip chip-green-out mono">CoT LIVE</span>
+              <span class="ink-dim mono">+ 1h 0m</span>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <!-- RESOLVED -->
+      <div>
+        <div class="col-head flex items-center justify-between" data-tip="col-rs" data-tip-title="RESOLVED"
+             data-tip-body="Segment cleared or cue resolved. Stays for shift handoff.">
+          <span class="col-name" style="color: var(--hi-green);">RESOLVED</span>
+          <span class="chip chip-green mono">3</span>
+        </div>
+        <div class="col-body p-2 space-y-2">
+          <article class="lead cleared p-2.5" data-tip="x1">
+            <div class="flex items-center justify-between mb-1">
+              <span class="chip chip-green mono">CLEARED</span>
+              <span class="mono text-[10px] ink-faint">21:02</span>
+            </div>
+            <div class="text-[13px] font-bold leading-tight">SEG A1 cleared by ALPHA</div>
+            <div class="mono text-[10.5px] ink-dim mt-1">no contact · 0.55 sq mi</div>
+          </article>
+          <article class="lead cleared p-2.5" data-tip="x2">
+            <div class="flex items-center justify-between mb-1">
+              <span class="chip chip-green mono">FALSE+</span>
+              <span class="mono text-[10px] ink-faint">20:48</span>
+            </div>
+            <div class="text-[13px] font-bold leading-tight">IR cue · deer signature</div>
+            <div class="mono text-[10.5px] ink-dim mt-1">false positive · model confirm</div>
+          </article>
+          <article class="lead cleared p-2.5" data-tip="x3">
+            <div class="flex items-center justify-between mb-1">
+              <span class="chip chip-green mono">CLOSED</span>
+              <span class="mono text-[10px] ink-faint">19:55</span>
+            </div>
+            <div class="text-[13px] font-bold leading-tight">Cell ping cluster resolved</div>
+            <div class="mono text-[10.5px] ink-dim mt-1">phone in vehicle at TH lot</div>
+          </article>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- RIGHT: BIG MAP + radio + brief -->
+  <aside class="space-y-3">
+
+    <div class="panel">
+      <div class="px-3 py-2 flex items-center justify-between border-b hairline">
+        <div>
+          <div class="display text-[18px] font-extrabold tracking-wider">SEARCH AREA</div>
+          <div class="mono text-[11px] ink-dim">8.0 sq mi · 9 segments · IPP red</div>
+        </div>
+        <div class="flex items-center gap-1">
+          <button class="btn btn-ghost text-[11px]">SEGS</button>
+          <button class="btn btn-ghost text-[11px]">TEAMS</button>
+          <button class="btn btn-ghost text-[11px]">IR</button>
+        </div>
+      </div>
+
+      <div class="sarmap" style="height: 340px;">
+        <!-- Segments -->
+        <div class="seg cleared"   style="top: 8%; left: 6%; width: 28%; height: 30%;">A1 · CLEARED</div>
+        <div class="seg searching" style="top: 8%; left: 38%; width: 26%; height: 30%;">A2 · BRAVO</div>
+        <div class="seg"           style="top: 8%; left: 68%; width: 26%; height: 30%;">A3 · K9-1</div>
+        <div class="seg searching" style="top: 42%; left: 6%; width: 28%; height: 30%;">A4 · ALPHA</div>
+        <div class="seg"           style="top: 42%; left: 38%; width: 26%; height: 30%;">A5</div>
+        <div class="seg"           style="top: 42%; left: 68%; width: 26%; height: 30%;">A6</div>
+        <div class="seg"           style="top: 76%; left: 6%; width: 28%; height: 18%;">A7</div>
+        <div class="seg"           style="top: 76%; left: 38%; width: 26%; height: 18%;">A8</div>
+        <div class="seg"           style="top: 76%; left: 68%; width: 26%; height: 18%;">A9</div>
+
+        <!-- IPP -->
+        <div class="ipp" style="top: 52%; left: 36%;"></div>
+
+        <!-- Markers -->
+        <div class="marker team"  style="top: 56%; left: 22%;"><div class="pinDot"></div><div class="pinLabel">ALPHA</div></div>
+        <div class="marker team"  style="top: 24%; left: 48%;"><div class="pinDot"></div><div class="pinLabel">BRAVO</div></div>
+        <div class="marker k9"    style="top: 22%; left: 80%;"><div class="pinDot"></div><div class="pinLabel">K9-1</div></div>
+        <div class="marker drone" style="top: 40%; left: 60%;"><div class="pinDot"></div><div class="pinLabel">AIR-1</div></div>
+        <div class="marker cue"   style="top: 16%; left: 70%;"><div class="pinDot"></div><div class="pinLabel">IR cue</div></div>
+        <div class="marker cue"   style="top: 20%; left: 50%;"><div class="pinDot"></div><div class="pinLabel">orange jkt?</div></div>
+      </div>
+
+      <div class="px-3 py-2 flex items-center justify-between text-[11px] mono border-t hairline">
+        <span class="ink-dim">N ↑ · scale 1:18,000 · POD 0.72</span>
+        <span class="text-white">9 segs · 1 cleared · 2 active · 6 pending</span>
+      </div>
+    </div>
+
+    <!-- COMMS + RADIO LOG -->
+    <div class="panel">
+      <div class="px-3 py-2 flex items-center justify-between border-b hairline">
+        <div class="display text-[18px] font-extrabold tracking-wider">RADIO &amp; AUDIT</div>
+        <div class="flex items-center gap-1">
+          <span class="chip chip-orange mono">TAC-1</span>
+          <span class="chip chip-water mono">TAC-3 AV</span>
+        </div>
+      </div>
+      <ul class="text-[12px]" style="max-height: 220px; overflow-y: auto;">
+        <li class="px-3 py-2 border-b hairline">
+          <div class="flex items-center justify-between">
+            <span class="font-bold">BRAVO → IC</span>
+            <span class="mono text-[10.5px] ink-faint">21:43:18 MDT</span>
+          </div>
+          <div class="ink-dim text-[11.5px]">"Comms intermittent in drainage, requesting runner to A2 standby."</div>
+        </li>
+        <li class="px-3 py-2 border-b hairline">
+          <div class="flex items-center justify-between">
+            <span class="font-bold">AIR-1 → IC</span>
+            <span class="mono text-[10.5px] ink-faint">21:41:02 MDT</span>
+          </div>
+          <div class="ink-dim text-[11.5px]">"IR cue at 38.85912, -105.04188 · score 0.74 · marking on CoT."</div>
+        </li>
+        <li class="px-3 py-2 border-b hairline">
+          <div class="flex items-center justify-between">
+            <span class="font-bold">IC ALERT</span>
+            <span class="mono text-[10.5px] ink-faint">21:30:00 MDT</span>
+          </div>
+          <div class="ink-dim text-[11.5px]">EPSO AV1 diverted to mission · ETA 0:12 · TAC-3 audio link established.</div>
+        </li>
+        <li class="px-3 py-2 border-b hairline">
+          <div class="flex items-center justify-between">
+            <span class="font-bold">ALPHA → IC</span>
+            <span class="mono text-[10.5px] ink-faint">21:02:14 MDT</span>
+          </div>
+          <div class="ink-dim text-[11.5px]">"A1 cleared, transitioning to A4."</div>
+        </li>
+        <li class="px-3 py-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold">SYSTEM</span>
+            <span class="mono text-[10.5px] ink-faint">17:45:00 MDT</span>
+          </div>
+          <div class="ink-dim text-[11.5px]">Mission activated · IC: D. Chen · CoT broadcast started.</div>
+        </li>
+      </ul>
+    </div>
+
+  </aside>
+
+</main>
+
+<!-- BOTTOM: brief / resources -->
+<section class="relative z-10 px-3 pt-3">
+  <div class="panel p-3 grid grid-cols-4 gap-3">
+    <div>
+      <div class="display text-[11px] tracking-[0.32em] uppercase ink-dim">Subject profile</div>
+      <div class="text-[13px] mt-1.5 leading-tight">M · 47 yrs · 5'10" · 175 lb · <span class="font-bold">orange shell</span>, grey pants, day pack.</div>
+      <div class="mono text-[11.5px] ink-dim mt-1.5">medical · controlled hypertension · 1L water remaining at LKP.</div>
+    </div>
+    <div>
+      <div class="display text-[11px] tracking-[0.32em] uppercase ink-dim">Mission objectives</div>
+      <ol class="text-[12.5px] mt-1.5 space-y-1 list-decimal pl-5">
+        <li>Locate &amp; assess subject prior to sunset</li>
+        <li>Sweep high-probability segments (A2, A3, A4) first</li>
+        <li>Establish night-ops posture by T-30 min</li>
+      </ol>
+    </div>
+    <div>
+      <div class="display text-[11px] tracking-[0.32em] uppercase ink-dim">Resources</div>
+      <div class="mt-1.5 grid grid-cols-2 gap-1.5 text-[12px] mono">
+        <span class="chip chip-orange-out">10 ground</span>
+        <span class="chip chip-yellow">1 K9</span>
+        <span class="chip chip-water">1 drone</span>
+        <span class="chip chip-night">1 helo (inbound)</span>
+        <span class="chip chip-crit-out">1 EMS staged</span>
+        <span class="chip chip-dim">2 vehicles</span>
+      </div>
+    </div>
+    <div>
+      <div class="display text-[11px] tracking-[0.32em] uppercase ink-dim">Nightfall plan</div>
+      <ul class="text-[12.5px] mt-1.5 space-y-1">
+        <li><span class="font-bold">T-30:</span> consolidate, transition to thermal-only</li>
+        <li><span class="font-bold">T-0:</span> AIR-2 thermal sweep, ground at trail nodes</li>
+        <li><span class="font-bold">T+60:</span> mutual aid request to county SAR-2</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer class="relative z-10 mt-3 px-4 py-2 border-t hairline-2 flex items-center gap-4 text-[11.5px] mono" style="background: #0f1217;">
+  <span><span class="font-bold text-white">TAK Server</span> · tak.epcoem.gov:8089 · 23 EUD</span>
+  <span class="opacity-50">|</span>
+  <span>CoT LIVE · <span class="font-bold text-white">12 markers</span> active</span>
+  <span class="opacity-50">|</span>
+  <span>Audit · append-only · 1,108 events</span>
+  <span class="opacity-50">|</span>
+  <span>NWS · sunset 19:45 MDT</span>
+  <span class="ml-auto display text-[10px] tracking-[0.32em] uppercase ink-faint">Target Workspace · 0.1.0 mockup</span>
+</footer>
+
+<div class="hivis-band text-[10px] text-center py-[4px] mt-1">SEARCH AND RESCUE OPERATIONS · ACTIVE MISSION · DEMONSTRATION DATA</div>
+
+<div id="tt" class="tt" role="tooltip"></div>
+<script>
+(() => {
+  const tt = document.getElementById('tt');
+  let active = null;
+  const show = (el) => {
+    active = el;
+    const title = el.getAttribute('data-tip-title') || '';
+    const body  = el.getAttribute('data-tip-body')  || '';
+    tt.innerHTML = (title?`<div class="tt-title">${title}</div>`:'') + (body?`<div>${body}</div>`:'');
+    tt.classList.add('show'); position(el);
+  };
+  const hide = () => { tt.classList.remove('show'); active=null; };
+  const position = (el) => {
+    const r = el.getBoundingClientRect(); const ttr = tt.getBoundingClientRect();
+    let x = r.left + r.width/2 - ttr.width/2;
+    let y = r.bottom + 8;
+    if (y + ttr.height > window.innerHeight - 8) y = r.top - ttr.height - 8;
+    x = Math.max(8, Math.min(x, window.innerWidth - ttr.width - 8));
+    tt.style.left = x+'px'; tt.style.top = y+'px';
+  };
+  document.querySelectorAll('[data-tip]').forEach(el => {
+    el.addEventListener('mouseenter', () => show(el));
+    el.addEventListener('mouseleave', hide);
+    el.addEventListener('focus', () => show(el));
+    el.addEventListener('blur', hide);
+  });
+  window.addEventListener('scroll', () => { if (active) position(active); }, true);
+  window.addEventListener('resize', () => { if (active) position(active); });
+
+  // tick the elapsed clock so it feels alive
+  const clocks = document.querySelectorAll('.clock');
+  let secs = 14423; // 04:00:23
+  setInterval(() => {
+    secs += 1;
+    const h = Math.floor(secs/3600);
+    const m = Math.floor((secs%3600)/60);
+    const s = secs%60;
+    const txt = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    if (clocks[0]) clocks[0].textContent = txt;
+    // sunset countdown decrement
+    if (clocks[1] && clocks[1].textContent.includes(':')) {
+      let p = clocks[1].textContent.split(':').map(Number);
+      let total = p[0]*3600 + p[1]*60 + p[2] - 1;
+      if (total < 0) total = 0;
+      const hh = Math.floor(total/3600), mm = Math.floor((total%3600)/60), ss = total%60;
+      clocks[1].textContent = String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0')+':'+String(ss).padStart(2,'0');
+    }
+  }, 1000);
+})();
+</script>
+</body>
+</html>

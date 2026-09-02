@@ -1,0 +1,38 @@
+# Target Workspace — production overlay.
+# Adds PostgreSQL+PostGIS as a separate service (networked, NOT linked into the
+# app container — see NOTICES.md for the GPL-2 networked-service exception).
+#
+# Usage:
+#   docker compose -f docker/docker-compose.yml -f docker/docker-compose.prod.yml up
+
+services:
+  app:
+    environment:
+      TW_ENV: "prod"
+      TW_DATABASE_URL: "postgresql+psycopg://tw:${POSTGRES_PASSWORD:?postgres password required}@db:5432/target_workspace"
+      TW_LOG_FORMAT: "json"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgis/postgis:17-3.6
+    container_name: tw-db
+    environment:
+      POSTGRES_USER: tw
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?postgres password required}
+      POSTGRES_DB: target_workspace
+    volumes:
+      - tw-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tw -d target_workspace"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  tw-db:

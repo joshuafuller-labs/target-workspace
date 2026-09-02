@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.vite/
+coverage/
+*.local
+
+# Cesium static assets — copied at build time from node_modules/cesium/Build,
+# served from /cesium/ at runtime. ~23 MB. Reproducible via
+# `node scripts/copy-cesium-assets.mjs` (auto-fires on dev/build).
+public/cesium/

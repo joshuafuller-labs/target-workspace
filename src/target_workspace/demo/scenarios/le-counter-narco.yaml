@@ -1,0 +1,137 @@
+# Federal LE / DHS — counter-narcotics case board
+# Mirrors the Federal LE mockup. Sample data only.
+
+name: "HSI El Paso · River Watch"
+workspace_name: "HSI El Paso"
+
+board:
+  name: "Case Board"
+  transitions: unrestricted
+  theme: federal
+  columns:
+    - { name: LEAD,        order: 0 }
+    - { name: INVESTIGATE, order: 1 }
+    - { name: VALIDATE,    order: 2, requires_approval: true }
+    - { name: ACTION,      order: 3, requires_approval: true }
+    - { name: CLOSED,      order: 4 }
+
+targets:
+  # --- LEAD ---
+  - name: "L-2026-EP-08144"
+    column_name: LEAD
+    cot_type: a-u-G-E-V
+    lat: 31.7619
+    lon: -106.4850
+    confidence: 0.94
+    minutes_ago: 1
+    custom_fields:
+      kind: vehicle
+      plate: "TX 5R3-J92"
+      source: "Flock LPR FL-EP-103"
+      bolo: true
+
+  - name: "L-2026-EP-08139"
+    column_name: LEAD
+    cot_type: a-u-G-I
+    lat: 31.7720
+    lon: -106.4905
+    minutes_ago: 3
+    custom_fields:
+      kind: structure
+      address: "1400 blk Mesa St"
+      source: "anonymous tip"
+      caller_grade: A2
+
+  - name: "L-2026-EP-08129"
+    column_name: LEAD
+    cot_type: a-u-G-E-V
+    lat: 31.7488
+    lon: -106.4990
+    minutes_ago: 22
+    custom_fields:
+      kind: vehicle
+      plate: "TX 8KD-417"
+      source: "USBP Stn EP/03"
+
+  # --- INVESTIGATE ---
+  - name: "HSI-2026-NRT-04419"
+    column_name: INVESTIGATE
+    cot_type: a-h-G-U-C
+    lat: 31.7650
+    lon: -106.4870
+    minutes_ago: 90
+    custom_fields:
+      case_kind: subject
+      subject: "MORALES, A."
+      charge: "21 USC §841 (S)"
+      ausa: "S. Brennan"
+      evidence_items: 11
+      days_open: 4
+    transitions:
+      - { to_column: INVESTIGATE, justification: "face DB match · workup opened", minutes_ago: 60 }
+
+  - name: "HSI-2026-NRT-04403"
+    column_name: INVESTIGATE
+    cot_type: a-u-G-E-V
+    lat: 31.7700
+    lon: -106.4810
+    minutes_ago: 60
+    custom_fields:
+      case_kind: vehicle
+      plate: "TX 5R3-J92"
+      days_open: 4
+    transitions:
+      - { to_column: INVESTIGATE, justification: "LPR pattern emerging", minutes_ago: 30 }
+
+  # --- VALIDATE ---
+  - name: "HSI-2026-NRT-04391"
+    column_name: VALIDATE
+    cot_type: a-h-G-I
+    lat: 31.7592
+    lon: -106.4948
+    minutes_ago: 1440
+    custom_fields:
+      case_kind: stash_house
+      address: "7800 blk Alameda"
+      subjects_ided: 3
+      sources: ["SUR", "CI", "LPR"]
+      ausa: "S. Brennan"
+      warrant_status: "draft v3 under review"
+    transitions:
+      - { to_column: INVESTIGATE, justification: "case opened", minutes_ago: 1380 }
+      - { to_column: VALIDATE,    justification: "AUSA review · two-source corroboration", minutes_ago: 480, approving_role: "ASAC" }
+
+  # --- ACTION ---
+  - name: "HSI-2026-NRT-04388"
+    column_name: ACTION
+    cot_type: a-h-G-I
+    lat: 31.7560
+    lon: -106.4880
+    minutes_ago: 2160
+    custom_fields:
+      case_kind: warrant_service
+      address: "2200 blk Texas"
+      teams: ["HSI SRT", "EPSO SWAT"]
+      eud_acks: 14
+    transitions:
+      - { to_column: INVESTIGATE, justification: "subject identified",                  minutes_ago: 2100 }
+      - { to_column: VALIDATE,    justification: "warrant approved by judge",           minutes_ago: 220, approving_role: "ASAC" }
+      - { to_column: ACTION,      justification: "warrant served · teams staged",      minutes_ago: 15, approving_role: "SAC" }
+
+  # --- CLOSED ---
+  - name: "HSI-2026-NRT-04371"
+    column_name: CLOSED
+    cot_type: a-h-G-U-C
+    lat: 31.7530
+    lon: -106.4820
+    minutes_ago: 4320
+    custom_fields:
+      case_kind: subject
+      subject_id: "0418"
+      disposition: "indicted · AUSA filed"
+      foia_status: "prep'd · queued"
+    transitions:
+      - { to_column: INVESTIGATE, justification: "case opened",                  minutes_ago: 4200 }
+      - { to_column: VALIDATE,    justification: "corroboration complete",       minutes_ago: 3200, approving_role: "ASAC" }
+      - { to_column: ACTION,      justification: "arrest executed",              minutes_ago: 1800, approving_role: "SAC" }
+      - { to_column: CLOSED,      justification: "indictment filed by AUSA",     minutes_ago: 720 }

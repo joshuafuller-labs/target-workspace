@@ -1,0 +1,895 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Target Workspace — DoD Tactical (Mockup)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0a0c0a;
+    --panel: #131613;
+    --panel-2: #1a1e1a;
+    --line: #2a2f29;
+    --line-2: #3a4239;
+    --ink: #d8dcd0;
+    --ink-dim: #8a917f;
+    --ink-faint: #5e6557;
+    --olive: #4a5d23;
+    --olive-2: #6b8132;
+    --fde: #c8ad7f;
+    --hostile: #b03a3a;
+    --hostile-2: #d35454;
+    --friendly: #3b6ea5;
+    --neutral: #b39434;
+    --unknown: #8a8a8a;
+    --good: #6aa84f;
+    --warn: #d39e3a;
+    --bad: #c44d4d;
+    --classif: #b03a3a;
+  }
+  html, body { background: var(--bg); color: var(--ink); font-family: 'Onest', system-ui, sans-serif; }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace; }
+  .panel { background: var(--panel); border: 1px solid var(--line); }
+  .panel-2 { background: var(--panel-2); border: 1px solid var(--line); }
+  .hairline { border-color: var(--line); }
+  .hairline-2 { border-color: var(--line-2); }
+  .ink-dim { color: var(--ink-dim); }
+  .ink-faint { color: var(--ink-faint); }
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; line-height: 16px; letter-spacing: 0.02em; }
+  .chip-dim { background: rgba(255,255,255,0.04); color: var(--ink-dim); border: 1px solid var(--line); }
+  .chip-fde { background: rgba(200,173,127,0.10); color: var(--fde); border: 1px solid rgba(200,173,127,0.35); }
+  .chip-olive { background: rgba(74,93,35,0.18); color: #b8d27a; border: 1px solid rgba(74,93,35,0.55); }
+  .chip-hostile { background: rgba(176,58,58,0.15); color: var(--hostile-2); border: 1px solid rgba(176,58,58,0.55); }
+  .chip-warn { background: rgba(211,158,58,0.12); color: var(--warn); border: 1px solid rgba(211,158,58,0.45); }
+  .chip-good { background: rgba(106,168,79,0.12); color: var(--good); border: 1px solid rgba(106,168,79,0.45); }
+  .chip-neutral { background: rgba(179,148,52,0.10); color: var(--neutral); border: 1px solid rgba(179,148,52,0.4); }
+  .chip-friendly { background: rgba(59,110,165,0.12); color: #6da3d0; border: 1px solid rgba(59,110,165,0.45); }
+  .chip-unknown { background: rgba(138,138,138,0.10); color: var(--unknown); border: 1px solid rgba(138,138,138,0.4); }
+
+  .classif-band { background: var(--classif); color: #fff; letter-spacing: 0.18em; }
+  .ribbon { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.0)); }
+
+  .card { background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; transition: border-color 120ms ease, transform 120ms ease, background 120ms ease; }
+  .card:hover { border-color: var(--line-2); }
+  .card.selected { border-color: var(--olive-2); background: #1e231d; box-shadow: 0 0 0 1px var(--olive-2) inset; }
+  .card-handle { cursor: grab; }
+  .col-head { background: linear-gradient(180deg, #161a16, #131613); border: 1px solid var(--line); border-bottom: 0; }
+  .col-body { background: rgba(255,255,255,0.01); border: 1px solid var(--line); border-top: 0; min-height: 70vh; }
+  .progress { height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
+  .progress > span { display: block; height: 100%; background: linear-gradient(90deg, var(--olive-2), #9ec154); }
+
+  /* MIL-STD-2525-ish affiliation glyph */
+  .affil { width: 14px; height: 14px; display: inline-block; vertical-align: -2px; }
+  .affil-hostile { width: 14px; height: 14px; background: var(--hostile); transform: rotate(45deg); display: inline-block; }
+  .affil-friendly { width: 14px; height: 14px; background: var(--friendly); border-radius: 50%; display: inline-block; }
+  .affil-neutral  { width: 14px; height: 14px; background: var(--neutral); display: inline-block; }
+  .affil-unknown  { width: 14px; height: 14px; background: var(--unknown); border-radius: 3px; display: inline-block; }
+
+  /* Tooltip system */
+  [data-tip] { position: relative; }
+  .tt { position: fixed; z-index: 80; pointer-events: none; max-width: 320px; background: #0e110e; color: var(--ink);
+    border: 1px solid var(--line-2); border-radius: 4px; padding: 8px 10px; font-size: 11px; line-height: 1.45;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5); opacity: 0; transform: translateY(2px); transition: opacity 120ms ease, transform 120ms ease; }
+  .tt.show { opacity: 1; transform: translateY(0); }
+  .tt .tt-title { color: #fff; font-weight: 600; font-size: 11px; margin-bottom: 4px; letter-spacing: 0.02em; }
+  .tt .tt-row { display: flex; justify-content: space-between; gap: 10px; }
+  .tt .tt-row span:first-child { color: var(--ink-dim); }
+  .tt .tt-kbd { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10px; color: var(--fde); }
+
+  /* Map */
+  .map { position: relative; background: #0c100c; background-image:
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px),
+    radial-gradient(800px 400px at 60% 40%, rgba(74,93,35,0.18), transparent 70%);
+    background-size: 24px 24px, 24px 24px, 100% 100%;
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .map .pin { position: absolute; transform: translate(-50%,-50%); }
+  .map .pin .dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 2px rgba(0,0,0,0.5), 0 0 12px rgba(176,58,58,0.6); }
+  .map .pin.hostile .dot { background: var(--hostile); }
+  .map .pin.friendly .dot { background: var(--friendly); box-shadow: 0 0 0 2px rgba(0,0,0,0.5), 0 0 12px rgba(59,110,165,0.55); }
+  .map .pin.neutral .dot { background: var(--neutral); }
+  .map .pin .label { color: #cbd0bf; font-size: 10px; margin-top: 2px; white-space: nowrap; text-shadow: 0 1px 2px #000; font-family: 'JetBrains Mono', monospace; }
+
+  /* Source feed pulse */
+  @keyframes pulse { 0% { opacity: 1 } 50% { opacity: .4 } 100% { opacity: 1 } }
+  .pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--good); animation: pulse 1.6s infinite; box-shadow: 0 0 8px var(--good); }
+  .feed-line:hover { background: rgba(255,255,255,0.03); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #2a2f29; border-radius: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  /* Confidence bar mini */
+  .conf { height: 3px; width: 36px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; display: inline-block; vertical-align: middle; }
+  .conf > span { display:block; height: 100%; }
+  .conf.high > span { background: var(--good); }
+  .conf.med  > span { background: var(--warn); }
+  .conf.low  > span { background: var(--bad); }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 3px; font-size: 12px; font-weight: 500; border: 1px solid var(--line-2); background: #1a1f1a; color: var(--ink); }
+  .btn:hover { background: #232a22; }
+  .btn-primary { background: var(--olive); border-color: var(--olive-2); color: #fff; }
+  .btn-primary:hover { background: var(--olive-2); }
+  .btn-ghost { background: transparent; border-color: var(--line); color: var(--ink-dim); }
+  .btn-danger { background: #3a1a1a; border-color: #5a2828; color: #f0c4c4; }
+
+  .kbd { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 4px; border: 1px solid var(--line-2); border-bottom-width: 2px; border-radius: 3px; background: #1a1f1a; color: var(--ink-dim); font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+
+  /* SVG icons */
+  .ic { width: 14px; height: 14px; stroke-width: 1.75; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- Top classification banner -->
+<div class="classif-band text-[11px] font-bold text-center py-[3px]">UNCLASSIFIED // FOR OFFICIAL USE ONLY // DEMONSTRATION DATA</div>
+
+<!-- Top app bar -->
+<header class="panel border-b hairline px-4 py-2 flex items-center gap-4">
+  <div class="flex items-center gap-2">
+    <div class="w-7 h-7 rounded" style="background: linear-gradient(135deg, var(--olive-2), var(--olive));"></div>
+    <div class="leading-tight">
+      <div class="text-[11px] uppercase tracking-widest ink-dim">Target Workspace</div>
+      <div class="mono text-[13px] font-semibold">JSOTF–7 / TF DAGGER</div>
+    </div>
+  </div>
+  <div class="h-7 w-px hairline border-l"></div>
+  <nav class="flex items-center gap-3 text-[12px]">
+    <a class="text-white font-medium" href="#">Board</a>
+    <a class="ink-dim hover:text-white" href="#">Sources</a>
+    <a class="ink-dim hover:text-white" href="#">Publishers</a>
+    <a class="ink-dim hover:text-white" href="#">Audit</a>
+    <a class="ink-dim hover:text-white" href="#">Policies</a>
+    <a class="ink-dim hover:text-white" href="#">Settings</a>
+  </nav>
+  <div class="ml-auto flex items-center gap-2">
+    <div class="chip chip-dim" data-tip="ops" data-tip-title="Operational context">
+      <span class="ink-faint">OP</span>
+      <span class="mono text-white">SWIFT EAGLE</span>
+    </div>
+    <div class="chip chip-dim mono" data-tip="dtg" data-tip-title="Current DTG (UTC/Zulu)">162145ZMAY26</div>
+    <button class="btn btn-ghost mono" data-tip="search" data-tip-title="Search (callsign, MGRS, source ID)" title="Search">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      Search <span class="kbd ml-1">/</span>
+    </button>
+    <div class="flex items-center gap-2 pl-2 border-l hairline">
+      <div class="w-7 h-7 rounded-full grid place-items-center text-[11px] font-semibold" style="background: #3a4a2a; color: #d8e6c0;">MR</div>
+      <div class="leading-tight">
+        <div class="text-[11px] font-medium">SSG M. Reyes</div>
+        <div class="text-[10px] ink-faint mono">S2 / 35F-A · TS//SCI</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Sub bar: board controls -->
+<div class="panel-2 border-b hairline px-4 py-2 flex items-center gap-3 text-[12px]">
+  <div class="flex items-center gap-1.5">
+    <span class="ink-dim">Board:</span>
+    <button class="btn" data-tip="boardpick" data-tip-title="Switch board template" data-tip-body="F3EAD · D3A · JP 3-60 Joint Targeting · F2T2EA · custom">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      <span class="font-semibold mono">F3EAD</span> · TF DAGGER ATL
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+  </div>
+  <div class="h-5 w-px hairline border-l"></div>
+  <div class="flex items-center gap-1.5">
+    <span class="ink-dim">Filter:</span>
+    <button class="btn" data-tip="filtaffil" data-tip-title="Affiliation filter"><span class="affil-hostile inline-block mr-1" style="width:10px;height:10px"></span> Hostile</button>
+    <button class="btn btn-ghost" data-tip="filtsrc" data-tip-title="Limit to one or more sources">Sources <span class="chip chip-dim ml-1">5</span></button>
+    <button class="btn btn-ghost" data-tip="filtconf" data-tip-title="Minimum confidence threshold">Conf ≥ 0.50</button>
+    <button class="btn btn-ghost" data-tip="filttime" data-tip-title="Limit by last-updated window">Last 24h</button>
+  </div>
+  <div class="ml-auto flex items-center gap-2">
+    <button class="btn" data-tip="newcard" data-tip-title="Add target manually" data-tip-body="Opens a form; manual sources are always gated.">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg> Add target <span class="kbd ml-1">N</span>
+    </button>
+    <button class="btn" data-tip="publish" data-tip-title="Publish selection to TAK" data-tip-body="Sends a CoT event to the configured TAK Server publishers. Disabled until at least one card is selected and approved.">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m22 2-7 20-4-9-9-4 20-7Z"/></svg> Publish · <span class="mono ink-dim">TAK Server</span>
+    </button>
+    <button class="btn btn-ghost" data-tip="view" data-tip-title="View density">Density: Comfortable</button>
+  </div>
+</div>
+
+<!-- Main 3-col layout -->
+<main class="grid grid-cols-[260px_minmax(0,1fr)_360px] gap-3 px-3 py-3">
+
+  <!-- LEFT: source feed -->
+  <aside class="panel flex flex-col">
+    <div class="px-3 py-2 border-b hairline flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="pulse-dot"></span>
+        <div>
+          <div class="text-[11px] uppercase tracking-widest ink-dim">Source Inbox</div>
+          <div class="text-[11px] mono">5 feeds · 23 new</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost px-1.5 h-6" data-tip="srcconfig" data-tip-title="Configure source adapters">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+      </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="px-3 py-2 border-b hairline flex flex-wrap gap-1">
+      <span class="chip chip-olive" data-tip="src-cv" data-tip-title="CV/ATR source" data-tip-body="MQ-9 EO/IR ATR · model yolov8-mil-v3.4 · auto-promote @ 0.85">CV-ATR · MQ-9</span>
+      <span class="chip chip-fde" data-tip="src-sig" data-tip-title="SIGINT cue feed" data-tip-body="TROJAN SPIRIT downlink · gated">SIGINT</span>
+      <span class="chip chip-fde" data-tip="src-hum" data-tip-title="HUMINT report stream" data-tip-body="HCT-7 INTREP cell · gated">HUMINT</span>
+      <span class="chip chip-fde" data-tip="src-gov" data-tip-title="GEOINT product webhook" data-tip-body="DGS NIPR · gated">GEOINT</span>
+      <span class="chip chip-fde" data-tip="src-osint" data-tip-title="OSINT scraper bundle" data-tip-body="Bellingcat / open feeds · gated · cite required">OSINT</span>
+    </div>
+
+    <!-- Feed -->
+    <div class="overflow-y-auto" style="max-height: calc(100vh - 220px);">
+      <!-- ROW -->
+      <div class="feed-line px-3 py-2 border-b hairline cursor-pointer" data-tip="fl1" data-tip-title="MQ-9 ATR · pickup truck (probable)" data-tip-body="model yolov8-mil-v3.4 · score 0.87 · 3 frames · MGRS 38S MB 24310 89520">
+        <div class="flex items-start gap-2">
+          <span class="chip chip-olive mono shrink-0">CV-ATR</span>
+          <div class="min-w-0">
+            <div class="text-[12px] font-medium truncate">Vehicle (pickup, probable)</div>
+            <div class="mono text-[10px] ink-faint">38S MB 24310 89520 · 2 min ago</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 mt-1">
+          <span class="conf high"><span style="width:87%"></span></span>
+          <span class="mono text-[10px] ink-dim">0.87</span>
+          <span class="chip chip-warn ml-auto">REVIEW</span>
+        </div>
+      </div>
+
+      <div class="feed-line px-3 py-2 border-b hairline cursor-pointer" data-tip="fl2" data-tip-title="HUMINT INTREP · personnel cluster" data-tip-body="HCT-7 · single source · grade C3 · cite REQ">
+        <div class="flex items-start gap-2">
+          <span class="chip chip-fde mono shrink-0">HUMINT</span>
+          <div class="min-w-0">
+            <div class="text-[12px] font-medium truncate">Personnel cluster · 6–8 pax</div>
+            <div class="mono text-[10px] ink-faint">38S MB 24190 89730 · 7 min ago</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 mt-1">
+          <span class="conf med"><span style="width:62%"></span></span>
+          <span class="mono text-[10px] ink-dim">0.62</span>
+          <span class="chip chip-warn ml-auto">REVIEW</span>
+        </div>
+      </div>
+
+      <div class="feed-line px-3 py-2 border-b hairline cursor-pointer" data-tip="fl3" data-tip-title="GEOINT · imagery change" data-tip-body="DGS NIPR auto-cue · 24h delta · 8m CE">
+        <div class="flex items-start gap-2">
+          <span class="chip chip-fde mono shrink-0">GEOINT</span>
+          <div class="min-w-0">
+            <div class="text-[12px] font-medium truncate">Structure · vehicle apron change</div>
+            <div class="mono text-[10px] ink-faint">38S MB 24710 89090 · 22 min ago</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 mt-1">
+          <span class="conf med"><span style="width:71%"></span></span>
+          <span class="mono text-[10px] ink-dim">0.71</span>
+          <span class="chip chip-dim ml-auto">QUEUED</span>
+        </div>
+      </div>
+
+      <div class="feed-line px-3 py-2 border-b hairline cursor-pointer" data-tip="fl4" data-tip-title="SIGINT · push-to-talk burst" data-tip-body="TROJAN SPIRIT · gated · COMINT analyst required">
+        <div class="flex items-start gap-2">
+          <span class="chip chip-fde mono shrink-0">SIGINT</span>
+          <div class="min-w-0">
+            <div class="text-[12px] font-medium truncate">RF burst · unknown comms</div>
+            <div class="mono text-[10px] ink-faint">38S MB 23990 89110 · 38 min ago</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 mt-1">
+          <span class="conf low"><span style="width:44%"></span></span>
+          <span class="mono text-[10px] ink-dim">0.44</span>
+          <span class="chip chip-dim ml-auto">QUEUED</span>
+        </div>
+      </div>
+
+      <div class="feed-line px-3 py-2 border-b hairline cursor-pointer" data-tip="fl5" data-tip-title="OSINT · social media post" data-tip-body="Bellingcat scrape · single source · cite REQ before promote">
+        <div class="flex items-start gap-2">
+          <span class="chip chip-fde mono shrink-0">OSINT</span>
+          <div class="min-w-0">
+            <div class="text-[12px] font-medium truncate">Geo-tagged image · convoy</div>
+            <div class="mono text-[10px] ink-faint">38S MB 25040 88720 · 51 min ago</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 mt-1">
+          <span class="conf med"><span style="width:55%"></span></span>
+          <span class="mono text-[10px] ink-dim">0.55</span>
+          <span class="chip chip-dim ml-auto">QUEUED</span>
+        </div>
+      </div>
+
+      <div class="feed-line px-3 py-2 border-b hairline cursor-pointer" data-tip="fl6" data-tip-title="CV-ATR · structure (compound)" data-tip-body="MQ-9 EO · score 0.92 · 11 frames · auto-promote eligible">
+        <div class="flex items-start gap-2">
+          <span class="chip chip-olive mono shrink-0">CV-ATR</span>
+          <div class="min-w-0">
+            <div class="text-[12px] font-medium truncate">Compound · likely command post</div>
+            <div class="mono text-[10px] ink-faint">38S MB 24830 88940 · 1h 6m ago</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 mt-1">
+          <span class="conf high"><span style="width:92%"></span></span>
+          <span class="mono text-[10px] ink-dim">0.92</span>
+          <span class="chip chip-good ml-auto">AUTO-OK</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Policy summary -->
+    <div class="border-t hairline px-3 py-2 text-[11px] ink-dim space-y-1">
+      <div class="flex items-center justify-between"><span>Policy</span><span class="mono text-white">conditional ≥ 0.85</span></div>
+      <div class="flex items-center justify-between"><span>HITL gate</span><span class="mono">required @ FINISH</span></div>
+      <div class="flex items-center justify-between"><span>Audit</span><span class="mono text-white">on (append-only)</span></div>
+    </div>
+  </aside>
+
+  <!-- CENTER: kanban -->
+  <section>
+    <div class="flex gap-3 overflow-x-auto pb-1">
+
+      <!-- COLUMN: FIND -->
+      <div class="min-w-[280px] w-[280px] shrink-0">
+        <div class="col-head rounded-t px-3 py-2 flex items-center justify-between" data-tip="col-find" data-tip-title="FIND · F3EAD"
+             data-tip-body="Entry stage. New detections land here. Policy: conditional auto-promote at confidence ≥ 0.85.">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full" style="background: var(--olive-2)"></span>
+            <span class="text-[12px] font-semibold tracking-widest">FIND</span>
+            <span class="text-[10px] ink-faint mono">F3EAD/1</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="chip chip-dim mono">12</span>
+            <button class="btn btn-ghost px-1.5 h-6"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg></button>
+          </div>
+        </div>
+        <div class="col-body rounded-b p-2 space-y-2">
+
+          <!-- CARD: BISON-01 -->
+          <article class="card p-2 card-handle" data-tip="card-bison" data-tip-title="BISON-01 · vehicle"
+                   data-tip-body="Detected from MQ-9 ATR. Promotion policy says: review required because cross-cue (HUMINT) is missing.">
+            <div class="flex items-center gap-2">
+              <span class="affil-hostile" data-tip="affil-h" data-tip-title="Affiliation: Hostile" data-tip-body="CoT type a-h-G-E-V (hostile / ground / equipment / vehicle)."></span>
+              <span class="mono text-[12px] font-semibold">BISON-01</span>
+              <span class="chip chip-olive mono ml-auto" data-tip="src-cv2" data-tip-title="Source · CV-ATR (MQ-9)" data-tip-body="Model yolov8-mil-v3.4 · 3 frames · raw payload retained">CV-ATR</span>
+            </div>
+            <div class="text-[12px] mt-1">Pickup truck (probable) · 1 PAX visible</div>
+            <div class="mono text-[10px] ink-faint mt-1">38S MB 24310 89520 · CE 18m</div>
+            <div class="flex items-center gap-2 mt-2">
+              <span class="conf high" data-tip="conf-bison" data-tip-title="Confidence 0.87"
+                    data-tip-body="Model: yolov8-mil-v3.4 · single-source · below auto-promote threshold (0.85 + cross-cue)."><span style="width:87%"></span></span>
+              <span class="mono text-[10px] ink-dim">0.87</span>
+              <span class="chip chip-warn ml-auto" data-tip="state-bison" data-tip-title="Promotion state · REVIEW REQ"
+                    data-tip-body="Held in FIND because no corroborating source. Promote manually or wait for cross-cue.">REVIEW REQ</span>
+            </div>
+            <div class="flex items-center justify-between mt-2 text-[10px] mono ink-faint">
+              <span data-tip="age-bison" data-tip-title="Time since first detection">2 min</span>
+              <span data-tip="watchers-bison" data-tip-title="Watchers" data-tip-body="3 operators are subscribed to changes on this card.">3 watchers</span>
+              <span data-tip="prov-bison" data-tip-title="Provenance" data-tip-body="1 source · raw frames in cold store · model card linked.">1 src</span>
+            </div>
+          </article>
+
+          <!-- CARD: VIPER-23 -->
+          <article class="card p-2 card-handle" data-tip="card-viper" data-tip-title="VIPER-23 · personnel cluster"
+                   data-tip-body="HUMINT-originated; gated per HUMINT source policy. Awaits S2 reviewer.">
+            <div class="flex items-center gap-2">
+              <span class="affil-hostile"></span>
+              <span class="mono text-[12px] font-semibold">VIPER-23</span>
+              <span class="chip chip-fde mono ml-auto">HUMINT</span>
+            </div>
+            <div class="text-[12px] mt-1">Personnel cluster · 6–8 PAX</div>
+            <div class="mono text-[10px] ink-faint mt-1">38S MB 24190 89730 · CE 35m</div>
+            <div class="flex items-center gap-2 mt-2">
+              <span class="conf med"><span style="width:62%"></span></span>
+              <span class="mono text-[10px] ink-dim">0.62</span>
+              <span class="chip chip-warn ml-auto">GATED</span>
+            </div>
+            <div class="flex items-center justify-between mt-2 text-[10px] mono ink-faint">
+              <span>7 min</span><span>2 watchers</span><span>1 src · C3</span>
+            </div>
+          </article>
+
+          <!-- CARD: HORNET-04 -->
+          <article class="card p-2 card-handle" data-tip="card-hornet" data-tip-title="HORNET-04 · structure"
+                   data-tip-body="GEOINT 24h delta cue. Likely fuel apron change. Cross-cue with HUMINT recommended before fix.">
+            <div class="flex items-center gap-2">
+              <span class="affil-unknown" data-tip="affil-u" data-tip-title="Affiliation: Unknown"></span>
+              <span class="mono text-[12px] font-semibold">HORNET-04</span>
+              <span class="chip chip-fde mono ml-auto">GEOINT</span>
+            </div>
+            <div class="text-[12px] mt-1">Structure · apron change (24h)</div>
+            <div class="mono text-[10px] ink-faint mt-1">38S MB 24710 89090 · CE 8m</div>
+            <div class="flex items-center gap-2 mt-2">
+              <span class="conf med"><span style="width:71%"></span></span>
+              <span class="mono text-[10px] ink-dim">0.71</span>
+              <span class="chip chip-dim ml-auto">QUEUED</span>
+            </div>
+            <div class="flex items-center justify-between mt-2 text-[10px] mono ink-faint">
+              <span>22 min</span><span>1 watcher</span><span>1 src</span>
+            </div>
+          </article>
+
+          <!-- CARD: OWL-11 -->
+          <article class="card p-2 card-handle" data-tip="card-owl" data-tip-title="OWL-11 · RF burst"
+                   data-tip-body="SIGINT cue; very low confidence; held for analyst review.">
+            <div class="flex items-center gap-2">
+              <span class="affil-unknown"></span>
+              <span class="mono text-[12px] font-semibold">OWL-11</span>
+              <span class="chip chip-fde mono ml-auto">SIGINT</span>
+            </div>
+            <div class="text-[12px] mt-1">RF burst · unknown comms · brief</div>
+            <div class="mono text-[10px] ink-faint mt-1">38S MB 23990 89110 · CE 110m</div>
+            <div class="flex items-center gap-2 mt-2">
+              <span class="conf low"><span style="width:44%"></span></span>
+              <span class="mono text-[10px] ink-dim">0.44</span>
+              <span class="chip chip-dim ml-auto">GATED</span>
+            </div>
+            <div class="flex items-center justify-between mt-2 text-[10px] mono ink-faint">
+              <span>38 min</span><span>1 watcher</span><span>1 src</span>
+            </div>
+          </article>
+
+        </div>
+      </div>
+
+      <!-- COLUMN: FIX -->
+      <div class="min-w-[280px] w-[280px] shrink-0">
+        <div class="col-head rounded-t px-3 py-2 flex items-center justify-between" data-tip="col-fix" data-tip-title="FIX · F3EAD"
+             data-tip-body="Multi-source corroboration. Card requires at least 2 sources or a confirmed observation.">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full" style="background: var(--fde)"></span>
+            <span class="text-[12px] font-semibold tracking-widest">FIX</span>
+            <span class="text-[10px] ink-faint mono">F3EAD/2</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="chip chip-dim mono">5</span>
+            <span class="chip chip-warn mono" data-tip="wip" data-tip-title="WIP limit" data-tip-body="Soft WIP limit: 6. Exceeding triggers a board notification.">5/6 WIP</span>
+          </div>
+        </div>
+        <div class="col-body rounded-b p-2 space-y-2">
+
+          <article class="card p-2 selected card-handle" data-tip="card-cobra" data-tip-title="COBRA-12 · convoy"
+                   data-tip-body="Multi-source fix: MQ-9 ATR + HUMINT corroborated within 8 min.">
+            <div class="flex items-center gap-2">
+              <span class="affil-hostile"></span>
+              <span class="mono text-[12px] font-semibold">COBRA-12</span>
+              <span class="chip chip-olive mono ml-auto">CV-ATR</span>
+              <span class="chip chip-fde mono">HUMINT</span>
+            </div>
+            <div class="text-[12px] mt-1">Convoy · 3× wheeled, mvmt N</div>
+            <div class="mono text-[10px] ink-faint mt-1">38S MB 24550 89270 · CE 12m</div>
+            <div class="progress mt-2"><span style="width: 60%"></span></div>
+            <div class="flex items-center gap-2 mt-2">
+              <span class="conf high"><span style="width:91%"></span></span>
+              <span class="mono text-[10px] ink-dim">0.91</span>
+              <span class="chip chip-good ml-auto" data-tip="state-cobra" data-tip-title="Promotion state · CONFIRMED"
+                    data-tip-body="Cross-cue threshold satisfied. Eligible for FINISH on next operator action.">CONFIRMED</span>
+            </div>
+            <div class="flex items-center justify-between mt-2 text-[10px] mono ink-faint">
+              <span>12 min</span><span>4 watchers</span><span>2 src · A2</span>
+            </div>
+          </article>
+
+          <article class="card p-2 card-handle" data-tip="card-badger" data-tip-title="BADGER-07 · structure"
+                   data-tip-body="HUMINT-validated structure. Standby for surveillance window.">
+            <div class="flex items-center gap-2">
+              <span class="affil-hostile"></span>
+              <span class="mono text-[12px] font-semibold">BADGER-07</span>
+              <span class="chip chip-fde mono ml-auto">HUMINT</span>
+              <span class="chip chip-fde mono">GEOINT</span>
+            </div>
+            <div class="text-[12px] mt-1">Structure · suspected SHQ</div>
+            <div class="mono text-[10px] ink-faint mt-1">38S MB 24830 88940 · CE 9m</div>
+            <div class="flex items-center gap-2 mt-2">
+              <span class="conf high"><span style="width:86%"></span></span>
+              <span class="mono text-[10px] ink-dim">0.86</span>
+              <span class="chip chip-good ml-auto">CONFIRMED</span>
+            </div>
+            <div class="flex items-center justify-between mt-2 text-[10px] mono ink-faint">
+              <span>1h 6m</span><span>3 watchers</span><span>2 src · B2</span>
+            </div>
+          </article>
+
+          <article class="card p-2 card-handle" data-tip="card-fox" data-tip-title="FOX-19 · vehicle">
+            <div class="flex items-center gap-2">
+              <span class="affil-hostile"></span>
+              <span class="mono text-[12px] font-semibold">FOX-19</span>
+              <span class="chip chip-olive mono ml-auto">CV-ATR</span>
+            </div>
+            <div class="text-[12px] mt-1">Vehicle · 1× wheeled, stopped</div>
+            <div class="mono text-[10px] ink-faint mt-1">38S MB 25040 88720 · CE 22m</div>
+            <div class="flex items-center gap-2 mt-2">
+              <span class="conf high"><span style="width:88%"></span></span>
+              <span class="mono text-[10px] ink-dim">0.88</span>
+              <span class="chip chip-warn ml-auto">CROSS-CUE</span>
+            </div>
+            <div class="flex items-center justify-between mt-2 text-[10px] mono ink-faint">
+              <span>9 min</span><span>2 watchers</span><span>1 src</span>
+            </div>
+          </article>
+
+        </div>
+      </div>
+
+      <!-- COLUMN: FINISH -->
+      <div class="min-w-[280px] w-[280px] shrink-0">
+        <div class="col-head rounded-t px-3 py-2 flex items-center justify-between" data-tip="col-finish" data-tip-title="FINISH · F3EAD"
+             data-tip-body="Action stage. Hard gate: requires approval (O5+). Audit log captures actor, time, justification.">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full" style="background: var(--hostile-2)"></span>
+            <span class="text-[12px] font-semibold tracking-widest">FINISH</span>
+            <span class="text-[10px] ink-faint mono">F3EAD/3 · GATED</span>
+          </div>
+          <span class="chip chip-dim mono">2</span>
+        </div>
+        <div class="col-body rounded-b p-2 space-y-2">
+
+          <article class="card p-2 card-handle" data-tip="card-panther" data-tip-title="PANTHER-09 · awaiting approval"
+                   data-tip-body="Confirmed convoy in named area of interest. Pending approval from current OPS-O.">
+            <div class="flex items-center gap-2">
+              <span class="affil-hostile"></span>
+              <span class="mono text-[12px] font-semibold">PANTHER-09</span>
+              <span class="chip chip-hostile mono ml-auto">APV PEND</span>
+            </div>
+            <div class="text-[12px] mt-1">Convoy · NAI-3 entry</div>
+            <div class="mono text-[10px] ink-faint mt-1">38S MB 24470 88860 · CE 11m</div>
+            <div class="flex items-center gap-2 mt-2">
+              <span class="conf high"><span style="width:94%"></span></span>
+              <span class="mono text-[10px] ink-dim">0.94</span>
+              <span class="chip chip-warn ml-auto" data-tip="apv-panther" data-tip-title="Approval queue position"
+                    data-tip-body="Approver: MAJ Holloway (OPS-O). ETA 2 min.">#1 in queue</span>
+            </div>
+            <div class="flex items-center justify-between mt-2 text-[10px] mono ink-faint">
+              <span>4 min</span><span>6 watchers</span><span>3 src</span>
+            </div>
+            <div class="flex gap-1 mt-2">
+              <button class="btn btn-primary text-[11px] flex-1" data-tip="approve-panther" data-tip-title="Approve to ACTION"
+                      data-tip-body="Promotes to ACTION; emits CoT to TAK Server and notifies watchers.">Approve <span class="kbd ml-1">⏎</span></button>
+              <button class="btn btn-danger text-[11px]" data-tip="reject" data-tip-title="Return to FIX">Reject</button>
+            </div>
+          </article>
+
+          <article class="card p-2 card-handle" data-tip="card-shark" data-tip-title="SHARK-02 · scheduled">
+            <div class="flex items-center gap-2">
+              <span class="affil-hostile"></span>
+              <span class="mono text-[12px] font-semibold">SHARK-02</span>
+              <span class="chip chip-good mono ml-auto">APPROVED</span>
+            </div>
+            <div class="text-[12px] mt-1">Structure · TST scheduled</div>
+            <div class="mono text-[10px] ink-faint mt-1">38S MB 24210 88780 · CE 7m</div>
+            <div class="flex items-center gap-2 mt-2">
+              <span class="conf high"><span style="width:96%"></span></span>
+              <span class="mono text-[10px] ink-dim">0.96</span>
+              <span class="chip chip-good ml-auto">TST 2215Z</span>
+            </div>
+            <div class="flex items-center justify-between mt-2 text-[10px] mono ink-faint">
+              <span>32 min</span><span>9 watchers</span><span>4 src · A1</span>
+            </div>
+          </article>
+
+        </div>
+      </div>
+
+      <!-- COLUMN: EXPLOIT -->
+      <div class="min-w-[280px] w-[280px] shrink-0">
+        <div class="col-head rounded-t px-3 py-2 flex items-center justify-between" data-tip="col-exploit" data-tip-title="EXPLOIT · F3EAD"
+             data-tip-body="Site exploitation, captured media/comms, follow-on intel.">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full" style="background: #c8743f"></span>
+            <span class="text-[12px] font-semibold tracking-widest">EXPLOIT</span>
+            <span class="text-[10px] ink-faint mono">F3EAD/4</span>
+          </div>
+          <span class="chip chip-dim mono">1</span>
+        </div>
+        <div class="col-body rounded-b p-2 space-y-2">
+          <article class="card p-2 card-handle" data-tip="card-wolf" data-tip-title="WOLF-03 · exploitation in progress">
+            <div class="flex items-center gap-2">
+              <span class="affil-hostile"></span>
+              <span class="mono text-[12px] font-semibold">WOLF-03</span>
+              <span class="chip chip-warn mono ml-auto">SSE</span>
+            </div>
+            <div class="text-[12px] mt-1">Compound · SSE team on-site</div>
+            <div class="mono text-[10px] ink-faint mt-1">38S MB 24830 88940 · CE 9m</div>
+            <div class="flex items-center gap-2 mt-2">
+              <span class="chip chip-fde mono" data-tip="dome-wolf" data-tip-title="Document and media exploitation"
+                    data-tip-body="3 devices captured · DOMEX pipeline queued">DOMEX 3</span>
+              <span class="chip chip-fde mono">PHOTOS 12</span>
+            </div>
+            <div class="flex items-center justify-between mt-2 text-[10px] mono ink-faint">
+              <span>1h 47m</span><span>5 watchers</span><span>SSE/DOMEX</span>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <!-- COLUMN: ANALYZE -->
+      <div class="min-w-[280px] w-[280px] shrink-0">
+        <div class="col-head rounded-t px-3 py-2 flex items-center justify-between" data-tip="col-analyze" data-tip-title="ANALYZE · F3EAD"
+             data-tip-body="All-source analysis. PED + link analysis. May spawn child targets.">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full" style="background: #8a78b5"></span>
+            <span class="text-[12px] font-semibold tracking-widest">ANALYZE</span>
+            <span class="text-[10px] ink-faint mono">F3EAD/5</span>
+          </div>
+          <span class="chip chip-dim mono">1</span>
+        </div>
+        <div class="col-body rounded-b p-2 space-y-2">
+          <article class="card p-2 card-handle" data-tip="card-hawk" data-tip-title="HAWK-18 · in PED">
+            <div class="flex items-center gap-2">
+              <span class="affil-hostile"></span>
+              <span class="mono text-[12px] font-semibold">HAWK-18</span>
+              <span class="chip chip-fde mono ml-auto">PED</span>
+            </div>
+            <div class="text-[12px] mt-1">Personnel net · link analysis</div>
+            <div class="mono text-[10px] ink-faint mt-1">network · 14 nodes / 22 edges</div>
+            <div class="flex items-center gap-2 mt-2">
+              <span class="chip chip-warn mono" data-tip="spawn-hawk" data-tip-title="Spawned child targets"
+                    data-tip-body="3 new candidate targets ready to drop into FIND.">SPAWN 3</span>
+            </div>
+            <div class="flex items-center justify-between mt-2 text-[10px] mono ink-faint">
+              <span>2h 10m</span><span>4 watchers</span><span>F3EAD ←</span>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <!-- COLUMN: DISSEMINATE -->
+      <div class="min-w-[280px] w-[280px] shrink-0">
+        <div class="col-head rounded-t px-3 py-2 flex items-center justify-between" data-tip="col-disseminate" data-tip-title="DISSEMINATE · F3EAD"
+             data-tip-body="Published to TAK Server / partners. Read-only here; new updates spawn children in FIND.">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full" style="background: #3b6ea5"></span>
+            <span class="text-[12px] font-semibold tracking-widest">DISSEM</span>
+            <span class="text-[10px] ink-faint mono">F3EAD/6 · LIVE</span>
+          </div>
+          <span class="chip chip-dim mono">1</span>
+        </div>
+        <div class="col-body rounded-b p-2 space-y-2">
+          <article class="card p-2 card-handle" data-tip="card-eagle" data-tip-title="EAGLE-31 · published">
+            <div class="flex items-center gap-2">
+              <span class="affil-hostile"></span>
+              <span class="mono text-[12px] font-semibold">EAGLE-31</span>
+              <span class="chip chip-friendly mono ml-auto" data-tip="pub-eagle" data-tip-title="Published to TAK Server"
+                    data-tip-body="CoT a-h-G-E-V emitted to tak.tfd.mil:8089 · 14 EUDs ack'd.">TAK · 14 EUD</span>
+            </div>
+            <div class="text-[12px] mt-1">Vehicle (technical) · broadcast</div>
+            <div class="mono text-[10px] ink-faint mt-1">38S MB 24180 88940 · CE 5m</div>
+            <div class="flex items-center gap-2 mt-2">
+              <span class="chip chip-good mono">LIVE</span>
+              <span class="chip chip-dim mono">stale 18:30Z</span>
+            </div>
+            <div class="flex items-center justify-between mt-2 text-[10px] mono ink-faint">
+              <span>3h 4m</span><span>11 watchers</span><span>5 src · A1</span>
+            </div>
+          </article>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- RIGHT: detail + map + activity -->
+  <aside class="space-y-3">
+
+    <!-- Selected target detail -->
+    <div class="panel">
+      <div class="px-3 py-2 border-b hairline flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="affil-hostile"></span>
+          <div class="mono text-[13px] font-semibold">COBRA-12</div>
+          <span class="chip chip-good mono">CONFIRMED</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <button class="btn btn-ghost px-1.5 h-6" data-tip="watch-cobra" data-tip-title="Watch / unwatch">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <button class="btn btn-ghost px-1.5 h-6" data-tip="share-cobra" data-tip-title="Copy link / share">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+          </button>
+          <button class="btn btn-ghost px-1.5 h-6" data-tip="more-cobra" data-tip-title="More actions">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="p-3 space-y-3">
+        <div class="grid grid-cols-3 gap-3 text-[12px]">
+          <div>
+            <div class="text-[10px] ink-faint uppercase tracking-widest">CoT type</div>
+            <div class="mono">a-h-G-E-V-C</div>
+          </div>
+          <div>
+            <div class="text-[10px] ink-faint uppercase tracking-widest">Confidence</div>
+            <div class="mono">0.91 <span class="ink-faint">·</span> <span class="conf high"><span style="width:91%"></span></span></div>
+          </div>
+          <div>
+            <div class="text-[10px] ink-faint uppercase tracking-widest">Handling</div>
+            <div class="mono">U//FOUO</div>
+          </div>
+          <div>
+            <div class="text-[10px] ink-faint uppercase tracking-widest">MGRS</div>
+            <div class="mono">38S MB 24550 89270</div>
+          </div>
+          <div>
+            <div class="text-[10px] ink-faint uppercase tracking-widest">CE / LE</div>
+            <div class="mono">12 m / 18 m</div>
+          </div>
+          <div>
+            <div class="text-[10px] ink-faint uppercase tracking-widest">Stale</div>
+            <div class="mono">+18 min</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="text-[10px] ink-faint uppercase tracking-widest mb-1">Provenance</div>
+          <ul class="space-y-1 text-[12px]">
+            <li class="flex items-center gap-2" data-tip="prov-cv" data-tip-title="MQ-9 ATR detection"
+                data-tip-body="3 frames · model yolov8-mil-v3.4 · raw payload retained in cold store">
+              <span class="chip chip-olive mono">CV-ATR</span>
+              <span class="mono text-[10px] ink-dim">3 frames</span>
+              <span class="ml-auto mono text-[10px] ink-faint">2 min ago</span>
+            </li>
+            <li class="flex items-center gap-2" data-tip="prov-hum" data-tip-title="HUMINT INTREP"
+                data-tip-body="HCT-7 · grade C3 · cite REQ before disseminate">
+              <span class="chip chip-fde mono">HUMINT</span>
+              <span class="mono text-[10px] ink-dim">HCT-7 · C3</span>
+              <span class="ml-auto mono text-[10px] ink-faint">7 min ago</span>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="text-[10px] ink-faint uppercase tracking-widest mb-1">Promotion policy</div>
+          <div class="panel-2 rounded p-2 text-[11px] space-y-1">
+            <div class="flex items-center justify-between"><span class="ink-dim">Mode</span><span class="mono">conditional</span></div>
+            <div class="flex items-center justify-between"><span class="ink-dim">Auto-promote @</span><span class="mono">≥ 0.85 + cross-cue</span></div>
+            <div class="flex items-center justify-between"><span class="ink-dim">Required stages</span><span class="mono">FIX → FINISH</span></div>
+            <div class="flex items-center justify-between"><span class="ink-dim">Approval roles</span><span class="mono">OPS-O · CDR</span></div>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <button class="btn btn-primary flex-1" data-tip="promote-cobra" data-tip-title="Promote to FINISH"
+                  data-tip-body="Moves to FINISH; will enter the approval queue (OPS-O).">
+            Promote → FINISH <span class="kbd ml-1">⇧⏎</span>
+          </button>
+          <button class="btn" data-tip="snooze-cobra" data-tip-title="Snooze until cross-cue or N minutes">Snooze</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map -->
+    <div class="panel">
+      <div class="px-3 py-2 border-b hairline flex items-center justify-between">
+        <div class="flex items-center gap-2 text-[12px]">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14"/><path d="M15 6v14"/></svg>
+          <span class="font-semibold">AO · NAI-3</span>
+          <span class="mono ink-faint text-[10px]">JOG-A · 38S</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <button class="btn btn-ghost px-1.5 h-6 mono">MGRS</button>
+          <button class="btn btn-ghost px-1.5 h-6" data-tip="layers" data-tip-title="Map layers">Layers</button>
+        </div>
+      </div>
+      <div class="map" style="height: 240px;">
+        <div class="pin hostile"  style="top:34%; left:42%;"><div class="dot"></div><div class="label">BISON-01</div></div>
+        <div class="pin hostile"  style="top:54%; left:30%;"><div class="dot"></div><div class="label">VIPER-23</div></div>
+        <div class="pin hostile"  style="top:60%; left:58%;"><div class="dot"></div><div class="label">COBRA-12</div></div>
+        <div class="pin hostile"  style="top:48%; left:66%;"><div class="dot"></div><div class="label">BADGER-07</div></div>
+        <div class="pin hostile"  style="top:72%; left:48%;"><div class="dot"></div><div class="label">PANTHER-09</div></div>
+        <div class="pin friendly" style="top:18%; left:22%;"><div class="dot"></div><div class="label">FOB DAGGER</div></div>
+        <div class="pin friendly" style="top:80%; left:78%;"><div class="dot"></div><div class="label">TEAM 3</div></div>
+        <div class="absolute bottom-2 right-2 chip chip-dim mono">1:50,000</div>
+      </div>
+    </div>
+
+    <!-- Activity / audit -->
+    <div class="panel">
+      <div class="px-3 py-2 border-b hairline flex items-center justify-between">
+        <div class="text-[12px] font-semibold">Activity · Audit</div>
+        <button class="btn btn-ghost px-1.5 h-6 text-[11px]" data-tip="audit-export" data-tip-title="Export audit (CSV/JSONL)" data-tip-body="Append-only, operator-signed log of every state change.">Export</button>
+      </div>
+      <ul class="text-[12px] divide-y hairline" style="max-height: 280px; overflow-y:auto;">
+        <li class="px-3 py-2">
+          <div class="flex items-center justify-between">
+            <span class="mono">COBRA-12 · FIX</span>
+            <span class="mono text-[10px] ink-faint">162143Z</span>
+          </div>
+          <div class="ink-dim text-[11px]">Cross-cue threshold met (CV-ATR + HUMINT) · auto-confirmed</div>
+        </li>
+        <li class="px-3 py-2">
+          <div class="flex items-center justify-between">
+            <span class="mono">PANTHER-09 · FINISH</span>
+            <span class="mono text-[10px] ink-faint">162139Z</span>
+          </div>
+          <div class="ink-dim text-[11px]">Promoted by <span class="text-white">SSG Reyes</span> · awaiting OPS-O approval</div>
+        </li>
+        <li class="px-3 py-2">
+          <div class="flex items-center justify-between">
+            <span class="mono">EAGLE-31 · DISSEM</span>
+            <span class="mono text-[10px] ink-faint">162102Z</span>
+          </div>
+          <div class="ink-dim text-[11px]">Published to TAK Server · 14 EUDs ack</div>
+        </li>
+        <li class="px-3 py-2">
+          <div class="flex items-center justify-between">
+            <span class="mono">SHARK-02 · FINISH</span>
+            <span class="mono text-[10px] ink-faint">162058Z</span>
+          </div>
+          <div class="ink-dim text-[11px]">Approved by <span class="text-white">MAJ Holloway</span> · TST scheduled 2215Z</div>
+        </li>
+        <li class="px-3 py-2">
+          <div class="flex items-center justify-between">
+            <span class="mono">HAWK-18 · ANALYZE</span>
+            <span class="mono text-[10px] ink-faint">161950Z</span>
+          </div>
+          <div class="ink-dim text-[11px]">Spawned 3 children to FIND from PED</div>
+        </li>
+        <li class="px-3 py-2">
+          <div class="flex items-center justify-between">
+            <span class="mono">BISON-01 · FIND</span>
+            <span class="mono text-[10px] ink-faint">162143Z</span>
+          </div>
+          <div class="ink-dim text-[11px]">New detection · CV-ATR / MQ-9 · awaiting cross-cue</div>
+        </li>
+      </ul>
+    </div>
+
+  </aside>
+
+</main>
+
+<!-- Status bar -->
+<footer class="border-t hairline px-4 py-1.5 flex items-center gap-3 text-[11px] mono">
+  <div class="flex items-center gap-1.5"><span class="pulse-dot"></span><span>TAK Server <span class="text-white">tak.tfd.mil:8089</span> · 14 EUD ack</span></div>
+  <span class="h-3 w-px hairline border-l"></span>
+  <span>Audit <span class="text-white">append-only</span> · 1,243 events / 24h</span>
+  <span class="h-3 w-px hairline border-l"></span>
+  <span>Sources <span class="text-white">5 active</span> · last ingest 12s ago</span>
+  <span class="ml-auto ink-faint">Target Workspace · build 0.1.0-mockup</span>
+</footer>
+
+<!-- Bottom classification banner -->
+<div class="classif-band text-[11px] font-bold text-center py-[3px]">UNCLASSIFIED // FOR OFFICIAL USE ONLY // DEMONSTRATION DATA</div>
+
+<!-- Tooltip element -->
+<div id="tt" class="tt" role="tooltip"></div>
+
+<script>
+(() => {
+  const tt = document.getElementById('tt');
+  let activeEl = null;
+  const show = (el) => {
+    activeEl = el;
+    const title = el.getAttribute('data-tip-title') || '';
+    const body  = el.getAttribute('data-tip-body')  || '';
+    tt.innerHTML =
+      (title ? `<div class="tt-title">${title}</div>` : '') +
+      (body  ? `<div>${body}</div>`  : '');
+    tt.classList.add('show');
+    position(el);
+  };
+  const hide = () => { tt.classList.remove('show'); activeEl = null; };
+  const position = (el) => {
+    const r = el.getBoundingClientRect();
+    const ttr = tt.getBoundingClientRect();
+    let x = r.left + r.width/2 - ttr.width/2;
+    let y = r.bottom + 8;
+    if (y + ttr.height > window.innerHeight - 8) y = r.top - ttr.height - 8;
+    x = Math.max(8, Math.min(x, window.innerWidth - ttr.width - 8));
+    tt.style.left = x + 'px';
+    tt.style.top  = y + 'px';
+  };
+  document.querySelectorAll('[data-tip]').forEach(el => {
+    el.addEventListener('mouseenter', () => show(el));
+    el.addEventListener('mouseleave', hide);
+    el.addEventListener('focus', () => show(el));
+    el.addEventListener('blur', hide);
+  });
+  window.addEventListener('scroll', () => { if (activeEl) position(activeEl); }, true);
+  window.addEventListener('resize', () => { if (activeEl) position(activeEl); });
+})();
+</script>
+</body>
+</html>

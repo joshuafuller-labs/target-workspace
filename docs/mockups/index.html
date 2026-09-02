@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Target Workspace — Mockups</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700;9..144,900&family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0c0d10;
+    --bg-2: #15171c;
+    --ink: #ece8df;
+    --ink-dim: #8c8b85;
+    --ink-faint: #5b5a55;
+    --line: #25272d;
+    --accent: #c8ad7f;
+  }
+  html, body { background: var(--bg); color: var(--ink); font-family: 'Onest', system-ui, sans-serif; }
+  body::before {
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background:
+      radial-gradient(900px 500px at 80% 10%, rgba(200,173,127,0.07), transparent 60%),
+      radial-gradient(800px 400px at 10% 90%, rgba(95,169,214,0.05), transparent 60%);
+  }
+  .serif { font-family: 'Fraunces', Georgia, serif; font-optical-sizing: auto; font-variation-settings: 'opsz' 144; }
+  .mono  { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+  .rule  { height: 1px; background: linear-gradient(90deg, transparent, var(--line) 20%, var(--line) 80%, transparent); }
+
+  .card {
+    position: relative; overflow: hidden; isolation: isolate;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    transition: transform 240ms cubic-bezier(0.2,0.7,0.2,1), border-color 240ms ease;
+  }
+  .card:hover { transform: translateY(-2px); border-color: #3c3f47; }
+  .card .stripe {
+    position: absolute; left: 0; right: 0; height: 6px; top: 0;
+    background-image: var(--stripe);
+  }
+
+  .swatch-row { display: flex; gap: 0; height: 22px; border: 1px solid rgba(255,255,255,0.06); }
+  .swatch-row > div { flex: 1; }
+
+  .fontline { font-size: 28px; line-height: 1; letter-spacing: 0.02em; }
+  .fontline .a { display: inline-block; }
+  .fontline .b { display: inline-block; opacity: 0.6; margin-left: 6px; }
+
+  .tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; border: 1px solid var(--line); color: var(--ink-dim); }
+  .tag-on { color: var(--accent); border-color: var(--accent); }
+
+  .num { font-family: 'Fraunces', serif; font-weight: 300; font-size: 64px; line-height: 1; color: var(--ink-faint); }
+
+  a.cardlink:focus { outline: 1px solid var(--accent); outline-offset: 4px; }
+</style>
+</head>
+<body class="min-h-screen relative">
+
+<div class="relative z-10 px-10 pt-12 pb-10 max-w-6xl mx-auto">
+
+  <!-- HEADER -->
+  <header class="flex items-end justify-between border-b" style="border-color: var(--line); padding-bottom: 18px;">
+    <div>
+      <div class="mono text-[11px] tracking-[0.32em] uppercase" style="color: var(--accent);">Target Workspace · Dashboard Mockups</div>
+      <h1 class="serif mt-2" style="font-weight: 300; font-size: 64px; line-height: 0.95; letter-spacing: -0.01em;">
+        Four customers.<br>
+        <span style="font-style: italic; color: var(--ink-dim);">Four aesthetics.</span>
+      </h1>
+    </div>
+    <div class="text-right text-[12.5px] ink-dim max-w-sm leading-snug">
+      One product, configured per segment. Each mockup commits to a distinct visual language fit for its operator — same data model, different ground truth about who's looking at it.
+    </div>
+  </header>
+
+  <!-- GRID -->
+  <ul class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
+
+    <!-- 01 -->
+    <li>
+      <a href="01-dod-tactical.html" class="cardlink card block p-7" style="--stripe: linear-gradient(90deg, #4a5d23, #c8ad7f);">
+        <div class="stripe"></div>
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="mono text-[10.5px] tracking-[0.28em] uppercase ink-dim">No. 01 · DoD Tactical</div>
+            <h2 class="serif mt-1.5 text-[28px] leading-tight" style="font-weight: 500;">JSOTF · F3EAD</h2>
+            <div class="mt-1 text-[13px] ink-dim">SSG M. Reyes · CPT L. Park</div>
+          </div>
+          <span class="num">01</span>
+        </div>
+
+        <div class="rule my-5"></div>
+
+        <div class="text-[13.5px] ink-dim leading-relaxed">
+          Six-column F3EAD with hard gate at FINISH. MIL-STD-2525-style affiliation glyphs, MGRS, DTG, mil-spec olive / FDE palette. CV-ATR, HUMINT, SIGINT, GEOINT, OSINT sources unified into one promotion engine.
+        </div>
+
+        <div class="mt-5 flex items-center gap-3">
+          <div class="swatch-row" style="width: 140px;">
+            <div style="background:#0a0c0a"></div><div style="background:#1a1e1a"></div><div style="background:#4a5d23"></div><div style="background:#c8ad7f"></div><div style="background:#b03a3a"></div>
+          </div>
+          <div class="flex-1 fontline">
+            <span class="a" style="font-family: 'Onest', sans-serif; font-weight: 600;">Onest</span>
+            <span class="b mono">JetBrains Mono</span>
+          </div>
+        </div>
+
+        <div class="mt-5 flex items-center gap-2">
+          <span class="tag tag-on">F3EAD</span>
+          <span class="tag">Six columns</span>
+          <span class="tag">Hard gate</span>
+        </div>
+      </a>
+    </li>
+
+    <!-- 02 -->
+    <li>
+      <a href="02-dod-operational.html" class="cardlink card block p-7" style="--stripe: linear-gradient(90deg, #0a141d, #f0b73d 60%, #e84a3b);">
+        <div class="stripe"></div>
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="mono text-[10.5px] tracking-[0.28em] uppercase ink-dim">No. 02 · DoD Operational</div>
+            <h2 class="serif mt-1.5 text-[28px] leading-tight" style="font-weight: 500;">JTF–22 J2 · D3A</h2>
+            <div class="mt-1 text-[13px] ink-dim">MAJ B. Holloway · A. Mehta</div>
+          </div>
+          <span class="num">02</span>
+        </div>
+
+        <div class="rule my-5"></div>
+
+        <div class="text-[13.5px] ink-dim leading-relaxed">
+          CIC / TOC aesthetic. Deep midnight teal with phosphor amber accents and a faint scan-line atmosphere. Tabular, data-dense cards keyed to JIPTL priority; approval queue and battle-rhythm timeline are the heroes.
+        </div>
+
+        <div class="mt-5 flex items-center gap-3">
+          <div class="swatch-row" style="width: 140px;">
+            <div style="background:#060e15"></div><div style="background:#0d1a26"></div><div style="background:#1c3346"></div><div style="background:#f0b73d"></div><div style="background:#e84a3b"></div>
+          </div>
+          <div class="flex-1 fontline">
+            <span class="a" style="font-family: 'Major Mono Display', monospace;">major mono</span>
+            <span class="b" style="font-family: 'Sora', sans-serif;">Sora</span>
+          </div>
+        </div>
+
+        <div class="mt-5 flex items-center gap-2">
+          <span class="tag tag-on">D3A</span>
+          <span class="tag">JIPTL · RTL · NSL</span>
+          <span class="tag">Approval queue</span>
+        </div>
+      </a>
+    </li>
+
+    <!-- 03 -->
+    <li>
+      <a href="03-federal-le.html" class="cardlink card block p-7" style="--stripe: linear-gradient(90deg, #fdfaf0, #b58c2e 50%, #8e2a26);">
+        <div class="stripe"></div>
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="mono text-[10.5px] tracking-[0.28em] uppercase ink-dim">No. 03 · Federal LE / DHS</div>
+            <h2 class="serif mt-1.5 text-[28px] leading-tight" style="font-weight: 500;">HSI El Paso · Case Board</h2>
+            <div class="mt-1 text-[13px] ink-dim">SA T. Garcia · R. Calderón</div>
+          </div>
+          <span class="num">03</span>
+        </div>
+
+        <div class="rule my-5"></div>
+
+        <div class="text-[13.5px] ink-dim leading-relaxed">
+          A complete tonal break — light, paper-grained surface; serif headlines; federal gold and stamp-red. Manila-folder cards carry case numbers, retention timers, and chain-of-custody. CJIS-grade audit docket is the right-hand hero.
+        </div>
+
+        <div class="mt-5 flex items-center gap-3">
+          <div class="swatch-row" style="width: 140px;">
+            <div style="background:#efe9d8"></div><div style="background:#fdfaf0"></div><div style="background:#14213d"></div><div style="background:#b58c2e"></div><div style="background:#8e2a26"></div>
+          </div>
+          <div class="flex-1 fontline">
+            <span class="a" style="font-family: 'Libre Caslon Text', serif; font-weight: 700;">Libre Caslon</span>
+            <span class="b" style="font-family: 'Source Sans 3', sans-serif;">Source Sans</span>
+          </div>
+        </div>
+
+        <div class="mt-5 flex items-center gap-2">
+          <span class="tag tag-on">CJIS v6.0</span>
+          <span class="tag">FOIA prep</span>
+          <span class="tag">Retention timers</span>
+        </div>
+      </a>
+    </li>
+
+    <!-- 04 -->
+    <li>
+      <a href="04-sar-public-safety.html" class="cardlink card block p-7" style="--stripe: linear-gradient(90deg, #14171c, #ff6a3d 60%, #fbd23d);">
+        <div class="stripe"></div>
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="mono text-[10.5px] tracking-[0.28em] uppercase ink-dim">No. 04 · State/Local · SAR</div>
+            <h2 class="serif mt-1.5 text-[28px] leading-tight" style="font-weight: 500;">EPC OEM · SAR Mission</h2>
+            <div class="mt-1 text-[13px] ink-dim">D. Chen · Lt M. O'Connor</div>
+          </div>
+          <span class="num">04</span>
+        </div>
+
+        <div class="rule my-5"></div>
+
+        <div class="text-[13.5px] ink-dim leading-relaxed">
+          Hi-vis dispatch aesthetic. Mission clock and sunset countdown in giant Big-Shoulders numerals; team roster as visual blocks; segment map fills the right column. SAR-orange and hi-vis yellow against charcoal. Time-pressure first.
+        </div>
+
+        <div class="mt-5 flex items-center gap-3">
+          <div class="swatch-row" style="width: 140px;">
+            <div style="background:#14171c"></div><div style="background:#232830"></div><div style="background:#4d6fa8"></div><div style="background:#fbd23d"></div><div style="background:#ff6a3d"></div>
+          </div>
+          <div class="flex-1 fontline">
+            <span class="a" style="font-family: 'Big Shoulders Display', sans-serif; font-weight: 800;">BIG SHOULDERS</span>
+            <span class="b" style="font-family: 'Outfit', sans-serif;">Outfit</span>
+          </div>
+        </div>
+
+        <div class="mt-5 flex items-center gap-2">
+          <span class="tag tag-on">SAR · 5 cols</span>
+          <span class="tag">Team blocks</span>
+          <span class="tag">Sunset timer</span>
+        </div>
+      </a>
+    </li>
+
+  </ul>
+
+  <!-- FOOTER NOTE -->
+  <section class="mt-14">
+    <div class="rule mb-5"></div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-[13px] ink-dim leading-relaxed">
+      <div>
+        <div class="mono text-[10.5px] tracking-[0.28em] uppercase" style="color: var(--accent);">Same data model</div>
+        <p class="mt-2">Targets, sources, publishers, promotion policies, audit log — identical across all four mockups. Only the board template, default columns, and aesthetic shift per workspace.</p>
+      </div>
+      <div>
+        <div class="mono text-[10.5px] tracking-[0.28em] uppercase" style="color: var(--accent);">Self-contained</div>
+        <p class="mt-2">Each file is one HTML doc — Tailwind CDN, Google Fonts, custom CSS and vanilla JS only. No build step. Open from disk or this LAN server.</p>
+      </div>
+      <div>
+        <div class="mono text-[10.5px] tracking-[0.28em] uppercase" style="color: var(--accent);">Tooltips everywhere</div>
+        <p class="mt-2">Hover any chip, control, card row, column header, glyph, or status indicator. Designed for operators who need to learn the system without losing what they're looking at.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="mt-12 mono text-[10.5px] tracking-[0.28em] uppercase ink-faint">Target Workspace · v0.1.0 · mockup set</div>
+</div>
+
+</body>
+</html>

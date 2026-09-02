@@ -1,0 +1,96 @@
+# Target Workspace — local immune system.
+# Mirrors PR validation gates where it's cheap to do so. The fast-test subset
+# runs here so TDD red-green-refactor is enforced before a commit lands.
+#
+# Install: pre-commit install --install-hooks
+# Run on all files: pre-commit run --all-files
+
+default_install_hook_types: [pre-commit, commit-msg]
+default_stages: [pre-commit]
+
+repos:
+  # Filesystem hygiene
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=512"]
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+
+  # Ruff — lint + format (replaces flake8/black/isort)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.13
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+      - id: ruff-format
+
+  # Bandit security linter
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.9.4
+    hooks:
+      - id: bandit
+        args: ["-c", "pyproject.toml", "-r"]
+        additional_dependencies: ["bandit[toml]"]
+        files: ^src/
+
+  # detect-secrets — block accidentally committed secrets
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+
+  # Conventional Commits — enforce message format
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.16.0
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+  # TDD enforcement — local hooks. Three hard gates:
+  #   1. focused mypy must run in the project uv environment.
+  #   2. any new src/ module must ship with a matching tests/ file in
+  #      the SAME commit (catches "I'll write the test later").
+  #   3. any feat:/fix: commit must touch at least one test file
+  #      (catches "the implementation is the test").
+  # The full non-slow suite remains available via:
+  #   pre-commit run pytest-manual --hook-stage manual
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: env MYPYPATH=src uv run mypy
+        language: system
+        files: ^(src|tests)/
+        stages: [pre-commit]
+
+      # Manual full-suite gate. This is intentionally not automatic on push:
+      # CI owns the full sweep, while local work uses focused TDD gates so
+      # commits can be pushed frequently without spending minutes per push.
+      - id: pytest-manual
+        name: pytest (not-slow, parallel) — manual gate
+        entry: uv run pytest -m "not slow" --no-cov -n auto -q
+        language: system
+        pass_filenames: false
+        stages: [manual]
+
+      - id: new-module-needs-test
+        name: "TDD: new src/ module must ship with a tests/ file"
+        entry: scripts/audit/check_new_module_has_test.py
+        language: script
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: feat-fix-touches-test
+        name: "TDD: feat:/fix: commit must touch a test file"
+        entry: scripts/audit/check_commit_touches_test.py
+        language: script
+        stages: [commit-msg]

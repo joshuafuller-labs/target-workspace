@@ -1,0 +1,44 @@
+# Keep build context small. Anything not in this list ships into the
+# docker build context.
+
+# VCS / editor noise
+.git
+.gitattributes
+.gitignore
+.idea
+.vscode
+*.swp
+
+# Python build artifacts + virtualenvs
+.venv
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+coverage.xml
+htmlcov
+*.egg-info
+
+# Frontend build artifacts (the Dockerfile builds these inside)
+frontend/dist
+frontend/node_modules
+frontend/.vite
+frontend/public/cesium
+
+# Runtime / local
+tw.db
+*.db
+*.sqlite
+*.sqlite3
+data
+.env
+.env.*
+!.env.example
+
+# Beads / docs / large dirs not needed by the build
+docs
+mkdocs.yml
+.github

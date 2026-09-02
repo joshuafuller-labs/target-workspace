@@ -1,0 +1,392 @@
+name: PR validation
+
+# Required status check for merge to main.
+# Mirrors scripts/check.sh — keep them aligned.
+
+on:
+  pull_request:
+    branches: [main]
+    # tw-qvdi.9: tracker/doc-only changes don't need the full validation gate.
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+  workflow_dispatch:
+    inputs:
+      test-scope:
+        description: "Validation breadth to run."
+        type: choice
+        options:
+          - full
+          - fast
+        default: full
+  # Also callable as a reusable workflow — main.yml re-runs PR validation
+  # on every push to main via `uses: ./.github/workflows/pr.yml`. Without
+  # this trigger declared, GitHub rejects main.yml at parse time and the
+  # whole run fails in 0s with "workflow file issue".
+  workflow_call:
+    inputs:
+      test-scope:
+        description: "Use 'fast' for main-branch dogfood pushes; default 'full' runs integration coverage."
+        type: string
+        default: "full"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number || github.ref }}
+  # tw-qvdi.8: only cancel superseded PR runs. When main.yml calls this as a
+  # reusable workflow (push event), do NOT cancel — otherwise a later push to
+  # main kills the in-flight image build.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  python:
+    name: Python — lint + type + test + audit
+    runs-on: arc-homelab-runner
+    # tw-qvdi.1: the suite runs ~16min on the CPU-capped (2-core) ARC runner;
+    # 20min killed every main build → no image. Raised to 35 as a margin.
+    # Runner CPU is deliberately constrained (NodeSystemSaturation, homelab #1364),
+    # so the real fix is speeding up the suite — tracked as tw-qvdi.2, not more CPU.
+    timeout-minutes: 35
+
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.11.14"
+          enable-cache: true
+
+      - name: Install Python via uv
+        run: uv python install 3.13
+
+      - name: Sync dependencies (frozen)
+        run: uv sync --all-extras --dev --frozen
+
+      - name: Ruff — lint
+        run: uv run ruff check .
+
+      - name: Ruff — format check
+        run: uv run ruff format --check .
+
+      - name: mypy --strict
+        run: uv run mypy src tests
+
+      - name: Bandit
+        run: uv run bandit -r src -c pyproject.toml
+
+      - name: detect-secrets
+        run: |
+          if [ -f .secrets.baseline ]; then
+            uv run detect-secrets scan --baseline .secrets.baseline
+          else
+            echo "no baseline yet — first PR may need to generate one"
+          fi
+
+      - name: Pytest (parallel + coverage)
+        # Full PR/manual validation still runs the broad non-slow suite with
+        # coverage. Main-branch dogfood pushes call this workflow with
+        # test-scope=fast so a deployable image is not coupled to the slow
+        # integration coverage sweep on constrained homelab runners.
+        run: |
+          set -euo pipefail
+          if [ "${{ inputs.test-scope }}" = "fast" ]; then
+            PYTHONWARNINGS='error::ResourceWarning' uv run pytest -n auto --dist=loadfile tests/unit tests/contract --no-cov --durations=20 -q
+          else
+            PYTHONWARNINGS='error::ResourceWarning' uv run pytest -n auto --dist=loadfile -m "not slow" --cov --cov-branch --cov-report=xml --durations=25
+          fi
+
+      - name: diff-cover (95% on changed lines)
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch --no-tags --depth=1 origin ${{ github.base_ref }}
+          uv run diff-cover coverage.xml --compare-branch=origin/${{ github.base_ref }} --fail-under=95
+
+      - name: pip-audit
+        run: |
+          uv export --no-dev --no-emit-project --no-hashes --format requirements-txt > /tmp/audit-reqs.txt
+          uv run pip-audit --strict --requirement /tmp/audit-reqs.txt
+
+      - name: pip-licenses (allow-list enforcement)
+        run: |
+          uv run pip-licenses --format=json --with-license-file \
+            --fail-on="GPL-2.0;GPL-3.0;AGPL-3.0;SSPL;UNKNOWN" > licenses.json
+          cat licenses.json | head -50
+
+      - name: Upload coverage XML
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-${{ github.run_id }}
+          path: coverage.xml
+          retention-days: 14
+          if-no-files-found: ignore
+
+  frontend:
+    name: Frontend — lint + typecheck + build
+    runs-on: arc-homelab-runner
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node (managed via package.json engines)
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      # npm dependency scanning. The container Trivy/Grype scans run against the
+      # built image, whose distroless Python runtime carries NO node_modules — so
+      # without this the entire npm tree is unscanned. `npm audit` reads the
+      # lockfile directly (no install required), so this gate runs before Install.
+      - name: npm audit (report)
+        run: npm audit --audit-level=moderate || true
+
+      # HARD GATE: fail on a COMPROMISED dependency.
+      # - Known-malicious packages are tagged CWE-506/507 in the GitHub Advisory
+      #   DB; we fail on these at ANY severity.
+      # - Critical-severity advisories also block (defense in depth).
+      - name: Block malicious or critical dependencies
+        run: |
+          set -euo pipefail
+          echo "Scanning dependency tree for malicious / critical advisories…"
+          audit="$(npm audit --json 2>/dev/null || true)"
+          if [ -z "$audit" ]; then
+            echo "::warning title=npm audit unavailable::npm audit returned no JSON; registry advisory endpoint may be unavailable."
+            exit 0
+          fi
+          if ! printf '%s' "$audit" | python3 -m json.tool >/dev/null 2>&1; then
+            echo "::warning title=npm audit unavailable::npm audit returned invalid JSON; registry advisory endpoint may be unavailable."
+            exit 0
+          fi
+          if printf '%s' "$audit" | grep -qiE 'CWE-50[67]|malware|malicious (package|code|version|dependenc)'; then
+            echo "::error title=Compromised dependency::A known-malicious package is in the dependency tree — failing the build."
+            printf '%s' "$audit" | python3 -c "import sys,json; d=json.load(sys.stdin); [print('::error::', k, '->', v.get('severity'), [ (x.get('title') if isinstance(x,dict) else x) for x in v.get('via',[]) ]) for k,v in d.get('vulnerabilities',{}).items()]" 2>/dev/null || true
+            exit 1
+          fi
+          critical_count="$(printf '%s' "$audit" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('metadata', {}).get('vulnerabilities', {}).get('critical', 0))")"
+          if [ "$critical_count" -gt 0 ]; then
+            echo "::error title=Critical dependency advisory::npm audit reported ${critical_count} critical advisories."
+            printf '%s' "$audit" | python3 -c "import sys,json; d=json.load(sys.stdin); [print('::error::', k, '->', v.get('severity'), [ (x.get('title') if isinstance(x,dict) else x) for x in v.get('via',[]) ]) for k,v in d.get('vulnerabilities',{}).items() if v.get('severity') == 'critical']" 2>/dev/null || true
+            exit 1
+          fi
+          echo "✓ No malicious or critical advisories."
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+  playwright:
+    name: Playwright e2e — compose smoke
+    runs-on: arc-homelab-runner
+    timeout-minutes: 25
+    needs: [python, frontend]
+    # Full PR/manual validation owns browser e2e. Main dogfood pushes use
+    # test-scope=fast so deploy velocity is not gated on the browser matrix.
+    if: ${{ inputs.test-scope != 'fast' }}
+
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node (managed via package.json engines)
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Start compose app
+        run: |
+          set -euo pipefail
+          docker compose -f docker/docker-compose.yml up -d --build app
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --show-error http://127.0.0.1:8000/readyz >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose -f docker/docker-compose.yml logs app
+          exit 1
+
+      - name: Playwright e2e
+        working-directory: frontend
+        run: npm run test:e2e
+
+      - name: Compose logs
+        if: always()
+        run: docker compose -f docker/docker-compose.yml logs app
+
+      - name: Stop compose app
+        if: always()
+        run: docker compose -f docker/docker-compose.yml down -v
+
+  container:
+    name: Container — build + SBOM + scan
+    runs-on: arc-homelab-runner
+    timeout-minutes: 25
+    needs: python
+    # Main-branch dogfood pushes call this reusable workflow with
+    # test-scope=fast. Keep the image publish lane fast by skipping this
+    # second image build + SBOM + vulnerability scan on that path; PR/manual
+    # validation still runs it because inputs.test-scope is unset/full.
+    if: ${{ inputs.test-scope != 'fast' }}
+
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
+        with:
+          driver: docker
+
+      - name: Build image (no push)
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7
+        with:
+          context: .
+          file: docker/Dockerfile
+          load: true
+          push: false
+          tags: target-workspace:pr-${{ github.event.pull_request.number || 'manual' }}
+          provenance: mode=max
+          sbom: true
+
+      - name: Generate SBOM (Syft)
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          image: target-workspace:pr-${{ github.event.pull_request.number || 'manual' }}
+          format: cyclonedx-json
+          output-file: sbom.cyclonedx.json
+
+      - name: Trivy scan (HIGH+CRITICAL fail)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0 — post-incident clean SHA
+        with:
+          image-ref: target-workspace:pr-${{ github.event.pull_request.number || 'manual' }}
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true
+
+      - name: Grype scan
+        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
+        with:
+          image: target-workspace:pr-${{ github.event.pull_request.number || 'manual' }}
+          fail-build: true
+          severity-cutoff: high
+          # tw-qvdi.1: match the Trivy step's `ignore-unfixed: true` — fail only on
+          # FIXABLE HIGH/CRITICAL. An unfixable base CVE (e.g. CVE-2026-7210 in the
+          # Chainguard python apk, no upstream patch) shouldn't block the build; Grype
+          # re-flags it the moment a fix ships, prompting a base bump.
+          only-fixed: true
+
+      - name: Upload SBOM
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sbom-${{ github.run_id }}
+          path: sbom.cyclonedx.json
+          retention-days: 30
+
+  postgres-migrations:
+    name: Postgres ${{ matrix.postgres-version }} — migration smoke
+    runs-on: arc-homelab-runner
+    timeout-minutes: 15
+    needs: python
+    if: ${{ inputs.test-scope != 'fast' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        postgres-version: ["15", "16"]
+    services:
+      postgres:
+        image: postgres:${{ matrix.postgres-version }}-bookworm
+        env:
+          POSTGRES_DB: target_workspace
+          POSTGRES_USER: tw
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tw -d target_workspace"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.11.14"
+          enable-cache: true
+
+      - name: Install Python via uv
+        run: uv python install 3.13
+
+      - name: Sync dependencies (frozen)
+        run: uv sync --all-extras --dev --frozen
+
+      - name: Alembic upgrade head
+        run: |
+          set -euo pipefail
+          export TW_DATABASE_URL="postgresql+psycopg://tw@127.0.0.1:5432/target_workspace"
+          uv run alembic upgrade head

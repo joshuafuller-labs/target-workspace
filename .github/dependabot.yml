@@ -1,0 +1,88 @@
+# Target Workspace — Dependabot configuration
+# Weekly grouped PRs for each ecosystem. CI gates each upgrade.
+
+version: 2
+
+updates:
+  # Python (uv ecosystem)
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 5
+    # Supply-chain cooldown: don't propose a release until it's been public >=5
+    # days, so active PyPI/npm worm waves (yanked within hours-to-days) are never
+    # adopted in their live window. CI's gates still hard-fail any compromised dep.
+    cooldown:
+      default-days: 5
+    labels: ["deps", "python"]
+    groups:
+      python-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+      python-security:
+        applies-to: security-updates
+        update-types:
+          - "minor"
+          - "patch"
+          - "major"
+
+  # Frontend (npm)
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 5
+    labels: ["deps", "frontend"]
+    groups:
+      npm-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+      npm-security:
+        applies-to: security-updates
+        update-types:
+          - "minor"
+          - "patch"
+          - "major"
+
+  # GitHub Actions — SHA pins, security-only auto-candidates
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 5
+    labels: ["deps", "ci"]
+    groups:
+      gha-all:
+        patterns:
+          - "*"
+
+  # Docker base images
+  - package-ecosystem: "docker"
+    directory: "/docker"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 3
+    cooldown:
+      default-days: 5
+    labels: ["deps", "docker"]

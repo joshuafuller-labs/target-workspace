@@ -1,0 +1,334 @@
+# Disaster relief — flash flood, Hill Country TX (Kerr County composite)
+#
+# Models the early-response window of a flash-flood event on the
+# Guadalupe River, anchored on the kind of operational reality the
+# July 2025 Kerr County floods exposed:
+#
+#   - children's summer camps in the floodplain (Camp Mystic and others)
+#     hit overnight, fast-moving water, evacuation by boat + helo
+#   - dozens of "I last saw my daughter at Cabin X" reports from
+#     families OUTSIDE the impact zone (relatives calling in)
+#   - reconciliation problem: many reports of the same missing person
+#   - multi-org dispatch: Kerr Sheriff, Texas Task Force 1 swift-water,
+#     LifeFlight, Red Cross sheltering, civilian volunteers (Cajun
+#     Navy style)
+#   - hazards as first-class entities (low-water crossings, downed
+#     bridges) — distinct from rescues and from resources
+#
+# Place names are real Hill Country geography (Hunt, Ingram, Kerrville,
+# Camp Mystic, Lake Ingram dam). Coordinates approximate. All
+# individuals fictional; the events composite.
+#
+# Exercises the malleability principle: same engine, no core code
+# changes. Domain typing — person, hazard, resource, task — is
+# carried in custom_fields.kind today; the dedicated entity_kind
+# enum lands with tw-?? (see backlog).
+
+name: "Kerr County Flash Flood · Hill Country EOC"
+workspace_name: "Kerr OEM · UCG"
+
+board:
+  name: "Incident Response · Op Period 1"
+  transitions: unrestricted
+  theme: ics
+  columns:
+    - { name: REPORTED,       order: 0 }
+    - { name: TRIAGED,        order: 1 }
+    - { name: DISPATCHED,     order: 2 }
+    - { name: IN_PROGRESS,    order: 3, requires_approval: true }
+    - { name: RESOLVED,       order: 4 }
+
+targets:
+  # ──────────────────────────────────────────────────────────────────
+  # REPORTED — fresh intake. Multiple channels: 911 calls, family-
+  # outside-the-zone welfare checks, deputy observations.
+  # ──────────────────────────────────────────────────────────────────
+
+  # Multiple family members report the same girl missing — classic
+  # reconciliation problem. Each is its own row in REPORTED; ops
+  # has to dedupe before dispatching.
+  - name: "WC-MISSING-001a"
+    column_name: REPORTED
+    cot_type: a-u-G-U-C
+    lat: 30.0033
+    lon: -99.4072
+    minutes_ago: 5
+    custom_fields:
+      kind: "person · missing child"
+      person_name: "Hannah B."
+      person_dob: "2014-09-12"
+      last_seen: "Camp Mystic · Bubble Inn cabin"
+      reporter: "grandmother (Austin TX)"
+      reporter_phone: "***-***-3104"
+      priority: CRITICAL
+      esf: "ESF-9 (SAR)"
+
+  - name: "WC-MISSING-001b"
+    column_name: REPORTED
+    cot_type: a-u-G-U-C
+    lat: 30.0033
+    lon: -99.4072
+    minutes_ago: 4
+    custom_fields:
+      kind: "person · missing child"
+      person_name: "Hannah Beasley"   # same girl, different reporter
+      person_dob: "2014"
+      last_seen: "Camp Mystic"
+      reporter: "father (Dallas TX)"
+      reporter_phone: "***-***-7741"
+      priority: CRITICAL
+      esf: "ESF-9 (SAR)"
+      duplicate_of_hint: "WC-MISSING-001a"
+
+  - name: "WC-MISSING-002"
+    column_name: REPORTED
+    cot_type: a-u-G-U-C
+    lat: 30.0042
+    lon: -99.4080
+    minutes_ago: 9
+    custom_fields:
+      kind: "person · missing child"
+      person_name: "Lily P."
+      person_dob: "2013-04-30"
+      last_seen: "Camp Mystic · Wiggle Inn cabin"
+      reporter: "mother (Houston TX)"
+      priority: CRITICAL
+      esf: "ESF-9 (SAR)"
+
+  - name: "311-LWX-2207"
+    column_name: REPORTED
+    cot_type: a-u-G-I
+    lat: 30.0598
+    lon: -99.3210
+    minutes_ago: 11
+    custom_fields:
+      entity_kind: "hazard"
+      kind: "hazard · low-water crossing flooded"
+      address: "FM 1340 at S Fork Guadalupe"
+      water_over_road_m: 1.8
+      reporter: "passing motorist"
+      priority: HIGH
+      esf: "ESF-1 (Transportation)"
+
+  - name: "DEP-OBS-118"
+    column_name: REPORTED
+    cot_type: a-u-G-I
+    lat: 30.0780
+    lon: -99.2350
+    minutes_ago: 14
+    custom_fields:
+      entity_kind: "hazard"
+      kind: "hazard · bridge debris"
+      address: "Ingram Loop bridge · log-jam against piers"
+      reporter: "KCSO deputy patrol"
+      priority: HIGH
+      esf: "ESF-3 (Public Works)"
+
+  # ──────────────────────────────────────────────────────────────────
+  # TRIAGED — assessed, duplicates merged, RoE matched. Person rows
+  # consolidate; hazard rows fast-track.
+  # ──────────────────────────────────────────────────────────────────
+
+  - name: "MISSING-001"
+    column_name: TRIAGED
+    cot_type: a-u-G-U-C
+    lat: 30.0033
+    lon: -99.4072
+    minutes_ago: 22
+    custom_fields:
+      kind: "person · confirmed missing"
+      person_name: "Hannah Beasley"
+      person_dob: "2014-09-12"
+      age: 10
+      last_seen: "Camp Mystic · Bubble Inn · 02:47"
+      merged_reports: ["WC-MISSING-001a", "WC-MISSING-001b"]
+      priority: CRITICAL
+      esf: "ESF-9 (SAR)"
+    transitions:
+      - { to_column: TRIAGED, justification: "two family reports reconciled; same individual confirmed by camp roster", minutes_ago: 18 }
+
+  # Resource row — what's on hand. Same engine, different kind. A
+  # task↔resource matching engine (tw-?? in backlog) would let you
+  # drag this onto a missing-person card.
+  - name: "RES-TXTF1-SQ7"
+    column_name: TRIAGED
+    cot_type: a-f-G-U-C
+    lat: 30.0474
+    lon: -99.1403
+    minutes_ago: 35
+    custom_fields:
+      kind: "resource · swift-water rescue squad"
+      team_id: "TX-TF1 SQ-7"
+      size: 6
+      capability: ["swift-water", "boat-rescue", "rope-rescue"]
+      staged_at: "Kerrville staging"
+      status: available
+      esf: "ESF-9 (SAR)"
+
+  - name: "RES-LIFEFLIGHT-3"
+    column_name: TRIAGED
+    cot_type: a-f-A-H
+    lat: 30.0474
+    lon: -99.1403
+    minutes_ago: 30
+    custom_fields:
+      kind: "resource · medevac helicopter"
+      team_id: "LifeFlight 3"
+      capability: ["hoist", "medevac", "night-ops"]
+      status: available
+      esf: "ESF-8 (Health)"
+
+  # Welfare check that resolved before dispatch — a relative called,
+  # the camp's safe-and-well call came in 6 minutes later. Audit
+  # captures the resolution path.
+  - name: "WC-001-RESOLVED"
+    column_name: TRIAGED
+    cot_type: a-f-G-U-C
+    lat: 30.0033
+    lon: -99.4072
+    minutes_ago: 48
+    custom_fields:
+      kind: "person · accounted for"
+      person_name: "Mia C."
+      last_seen: "Camp Mystic · senior cabin"
+      disposition: "self-evacuated to higher ground · contacted family at 03:14"
+      esf: "ESF-9 (SAR)"
+    transitions:
+      - { to_column: TRIAGED, justification: "camp safe-and-well roster reconciled to family report",  minutes_ago: 40 }
+
+  # ──────────────────────────────────────────────────────────────────
+  # DISPATCHED — assignment cut, team en route or staged. Approval
+  # not yet required.
+  # ──────────────────────────────────────────────────────────────────
+
+  - name: "SAR-CAMP-MYSTIC"
+    column_name: DISPATCHED
+    cot_type: a-f-G-U-C
+    lat: 30.0033
+    lon: -99.4072
+    minutes_ago: 65
+    geometry_kind: polygon
+    polygon_vertices:
+      - [30.0050, -99.4090]
+      - [30.0050, -99.4055]
+      - [30.0015, -99.4055]
+      - [30.0015, -99.4090]
+    custom_fields:
+      kind: "task · multi-victim SAR"
+      site: "Camp Mystic"
+      missing_count_estimate: 27
+      accounted_count: 8
+      assigned_resources: ["TX-TF1 SQ-7", "TX-TF1 SQ-9", "LifeFlight 3", "KCSO dive team"]
+      priority: CRITICAL
+      esf: "ESF-9 (SAR)"
+    transitions:
+      - { to_column: TRIAGED,    justification: "site condition: cabins inundated, water receding", minutes_ago: 60 }
+      - { to_column: DISPATCHED, justification: "TX-TF1 boats launching from Hwy 39 staging",     minutes_ago: 38 }
+
+  - name: "RECON-CAMP-WALDEMAR"
+    column_name: DISPATCHED
+    cot_type: a-f-G-U-C
+    lat: 30.0383
+    lon: -99.4310
+    minutes_ago: 55
+    custom_fields:
+      kind: "task · status assessment"
+      site: "Camp Waldemar"
+      assigned_resources: ["KCSO aerial · UAS"]
+      priority: HIGH
+      esf: "ESF-9 (SAR)"
+
+  - name: "SHELTER-INGRAM-HS"
+    column_name: DISPATCHED
+    cot_type: a-f-G-I
+    lat: 30.0775
+    lon: -99.2353
+    minutes_ago: 90
+    custom_fields:
+      kind: "task · shelter activation"
+      address: "Ingram HS gymnasium"
+      capacity: 250
+      assigned_resources: ["Red Cross DR-2 unit"]
+      priority: HIGH
+      esf: "ESF-6 (Mass Care)"
+
+  # ──────────────────────────────────────────────────────────────────
+  # IN_PROGRESS — active engagement, gated by approver (OSC / Branch).
+  # ──────────────────────────────────────────────────────────────────
+
+  - name: "RESCUE-CABIN-BUBBLE-INN"
+    column_name: IN_PROGRESS
+    cot_type: a-f-G-U-C
+    lat: 30.0029
+    lon: -99.4068
+    minutes_ago: 145
+    custom_fields:
+      kind: "task · active rescue"
+      site: "Camp Mystic · Bubble Inn cabin"
+      individuals_remaining: 4
+      method: "boat extraction + line-rescue"
+      team: "TX-TF1 SQ-7"
+      priority: CRITICAL
+      esf: "ESF-9 (SAR)"
+    transitions:
+      - { to_column: TRIAGED,     justification: "4 girls + 1 counselor on cabin roof, water below floor",  minutes_ago: 130 }
+      - { to_column: DISPATCHED,  justification: "TX-TF1 boat enroute",                                     minutes_ago: 105 }
+      - { to_column: IN_PROGRESS, justification: "team on-site, extraction in progress", minutes_ago: 70, approving_role: "OSC" }
+
+  - name: "EVAC-HUNT-RV-PARK"
+    column_name: IN_PROGRESS
+    cot_type: a-f-G-U-C
+    lat: 30.0683
+    lon: -99.3469
+    minutes_ago: 200
+    custom_fields:
+      kind: "task · area evacuation"
+      address: "Hunt River Walk RV Park · 60 sites"
+      method: "ground evac via Hwy 39 east"
+      team: "Kerr Sheriff patrol + 2 buses"
+      priority: HIGH
+      esf: "ESF-1 (Transportation)"
+    transitions:
+      - { to_column: TRIAGED,     justification: "Guadalupe at flood stage, park manager unreachable",  minutes_ago: 180 }
+      - { to_column: DISPATCHED,  justification: "buses on station",                                    minutes_ago: 140 }
+      - { to_column: IN_PROGRESS, justification: "evacuation underway · 42 of estimated 90 moved",      minutes_ago: 95, approving_role: "Branch Director" }
+
+  # ──────────────────────────────────────────────────────────────────
+  # RESOLVED — closed in this op period. The audit chain is the
+  # ICS-214 / after-action narrative.
+  # ──────────────────────────────────────────────────────────────────
+
+  - name: "RESCUE-OLD-RIVER-RD"
+    column_name: RESOLVED
+    cot_type: a-f-G-U-C
+    lat: 30.0541
+    lon: -99.3812
+    minutes_ago: 360
+    custom_fields:
+      kind: "task · rescue completed"
+      site: "Old River Rd · stranded family of 4"
+      disposition: "family extracted by boat at 03:38 · transported to Ingram HS shelter"
+      assigned_resources: ["Cajun Navy crew Boat 7"]
+      esf: "ESF-9 (SAR)"
+    transitions:
+      - { to_column: TRIAGED,     justification: "911 caller reports family on roof",                minutes_ago: 350 }
+      - { to_column: DISPATCHED,  justification: "civilian boat crew accepted assignment",          minutes_ago: 330 }
+      - { to_column: IN_PROGRESS, justification: "boat on-site",                                     minutes_ago: 295, approving_role: "OSC" }
+      - { to_column: RESOLVED,    justification: "family safe at Ingram HS shelter",                 minutes_ago: 240 }
+
+  - name: "HAZARD-LWX-2207-MARKED"
+    column_name: RESOLVED
+    cot_type: a-u-G-I
+    lat: 30.0598
+    lon: -99.3210
+    minutes_ago: 280
+    custom_fields:
+      entity_kind: "hazard"
+      kind: "hazard · barricaded"
+      address: "FM 1340 at S Fork Guadalupe"
+      disposition: "TxDOT crew placed Type-III barricades + flashers · advisory pushed to Waze/Google"
+      esf: "ESF-1 (Transportation)"
+    transitions:
+      - { to_column: TRIAGED,    justification: "TxDOT acknowledged", minutes_ago: 260 }
+      - { to_column: DISPATCHED, justification: "crew enroute",       minutes_ago: 230 }
+      - { to_column: RESOLVED,   justification: "road closed, public advisory pushed", minutes_ago: 175 }

@@ -1,0 +1,39 @@
+1
+00:00:04,552 --> 00:00:09,052
+Kerr County, Texas. Guadalupe River at flood stage. The operations cell is running this incident through Target Workspace.
+
+2
+00:00:09,602 --> 00:00:14,602
+Sixteen cards across five columns — welfare checks, hazards, SAR tasks, and the resources that handle them.
+
+3
+00:00:22,417 --> 00:00:26,917
+Hazards render in warning red — flooded crossings, debris piles, gas leaks — distinct from contacts on both the card and the map.
+
+4
+00:00:34,575 --> 00:00:40,575
+Two family members reported the same missing girl. Track correlation merged them into one canonical target — the audit chain records both intake events.
+
+5
+00:00:41,728 --> 00:00:47,228
+Every observation that touches this target lands in the timeline — source, position, confidence. Independent cues fuse via the 1 − ∏(1 − cᵢ) rule.
+
+6
+00:00:47,988 --> 00:00:53,488
+Live positions of assigned callsigns — distance, bearing, speed. PLI from TAK Server. Geofence-arrival auto-promotes the card when the team is on-scene.
+
+7
+00:00:55,431 --> 00:00:59,931
+Every state change writes a signed, append-only audit event. Filter by actor, event type, time window, or full-text.
+
+8
+00:01:02,069 --> 00:01:06,569
+Export to CSV for after-action review, FOIA response, or chain-of-custody attestation.
+
+9
+00:01:07,687 --> 00:01:12,687
+Workspace settings are per-tenant — brand, theme, freshness window, correlation tolerance. Admins edit inline; no rebuild required.
+
+10
+00:01:20,260 --> 00:01:25,760
+Target Workspace — CoT-native, configurable, audit-grade. Built for the ops cell that takes the call.

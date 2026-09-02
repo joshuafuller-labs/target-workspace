@@ -1,0 +1,14 @@
+# Target Workspace — code ownership
+# Required reviewer for any PR that touches the listed paths.
+# As of 2026-05-16 the project is solo; future contributors are added here.
+
+*                                @joshuafuller
+
+# Foundation files require extra scrutiny — supply-chain critical
+/.github/                        @joshuafuller
+/.pre-commit-config.yaml         @joshuafuller
+/pyproject.toml                  @joshuafuller
+/uv.lock                         @joshuafuller
+/docker/                         @joshuafuller
+/docs/adr/                       @joshuafuller
+/docs/tech-stack.md              @joshuafuller

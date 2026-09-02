@@ -1,0 +1,8 @@
+# Validation overlay — exposes the CoT-in TCP listener port for end-to-end
+# TAK validation. Use with the base compose:
+#   docker compose -f docker/docker-compose.yml -f docker/docker-compose.validation.yml up -d
+services:
+  app:
+    ports:
+      - "8000:8000"
+      - "8087:8087" # cot_in TCP listener (TAK Server convention)

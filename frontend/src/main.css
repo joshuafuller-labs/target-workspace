@@ -1,0 +1,130 @@
+/* Tailwind 4 — single-line import; @theme directives go below as needed. */
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Public Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+}
+
+/* `desktop:` custom variant — used in place of the default `md:` for any
+ * class that toggles mobile-vs-desktop CHROME (header collapse, drawer
+ * vs inline, side-by-side map vs fullscreen overlay, etc).
+ *
+ * Why a custom variant rather than the built-in md: (>=768px width-only):
+ * a phone in landscape is ~844×390 and clears the 768 width threshold,
+ * which makes the SPA flip to the desktop chrome and the 197px-tall
+ * header eats half the visible viewport. Requiring BOTH width>=768 AND
+ * height>=600 keeps phone-landscape on the mobile drawer where it
+ * belongs. tw-h9j follow-up. */
+@custom-variant desktop (@media (min-width: 768px) and (min-height: 600px));
+
+/* Document-level horizontal-overflow clip.
+ *
+ * The kanban has horizontally-scrollable columns at the section level
+ * (overflow-x-auto). Without clipping at the document root, those wide
+ * children expand `<html>.scrollWidth` past viewport — which on iOS
+ * Safari makes `position: fixed; inset: 0` anchor to the WIDER layout
+ * viewport, so opening a card detail modal puts it down-right of the
+ * visible area (the user has to pinch-out and pan to find it).
+ *
+ * Force the html/body to clip horizontally so the kanban's internal
+ * scroll remains the ONLY horizontal scroll on the page.
+ */
+html, body {
+  overflow-x: hidden;
+}
+
+/* Theme palette CSS variables — applied at runtime by src/theme.ts when the
+   current board's `theme` field changes. Defaults match the `neutral` palette
+   so first-paint never flashes a wrong color before applyTheme() runs.       */
+:root {
+  /* color tiers */
+  --tw-bg: #0a0a0a;
+  --tw-bg-panel: #141414;
+  --tw-bg-panel-hover: #1f1f1f;
+  --tw-border: #262626;
+  --tw-border-hover: #3f3f46;
+  --tw-ink: #f5f5f5;
+  --tw-ink-muted: #a3a3a3;
+  --tw-ink-dim: #525252;
+  --tw-accent: #fbbf24;
+  --tw-accent-bg: #f59e0b;
+  --tw-accent-bg-hover: #fbbf24;
+  --tw-accent-ink: #0a0a0a;
+  --tw-approval: #fbbf24;
+  --tw-brand: #fbbf24;
+  --tw-rail: #fbbf24;
+
+  /* typography & decoration */
+  --tw-font-display: "Geist Mono", ui-monospace, monospace;
+  --tw-font-body: "Geist Mono", ui-monospace, monospace;
+  --tw-font-mono: "Geist Mono", ui-monospace, monospace;
+  --tw-header-tracking: 0.18em;
+  --tw-header-transform: uppercase;
+  --tw-header-weight: 600;
+  --tw-radius: 4px;
+  --tw-bg-image: none;
+}
+
+/* Apply the body font globally so theme switches repaint type instantly. */
+html,
+body {
+  background: var(--tw-bg);
+  color: var(--tw-ink);
+  font-family: var(--tw-font-body);
+  font-feature-settings: "ss01", "cv01", "cv02";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Background pattern lives on the root #app shell. Fixed attachment so the
+   pattern doesn't scroll with the kanban — feels like the surface the cards
+   sit on top of, not a wallpaper that moves with them. */
+body {
+  background-image: var(--tw-bg-image);
+  background-attachment: fixed;
+  background-repeat: repeat;
+}
+
+/* Hairline accent rail under the top header. Theme-keyed via --tw-rail.
+   The .tw-rail class is applied by BoardView. */
+.tw-rail::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--tw-rail);
+  opacity: 0.7;
+}
+
+/* Section headers (column titles, audit-log eyebrow, etc.) inherit the
+   theme's tracking + case. .tw-eyebrow is the small overline label;
+   .tw-display is the big board name. */
+.tw-eyebrow {
+  font-family: var(--tw-font-display);
+  letter-spacing: var(--tw-header-tracking);
+  text-transform: var(--tw-header-transform);
+  font-weight: var(--tw-header-weight);
+}
+
+.tw-display {
+  font-family: var(--tw-font-display);
+  font-weight: var(--tw-header-weight);
+}
+
+/* LIVE-state freshness dot pulses to make the "this just landed" signal
+   pre-attentive. Respect prefers-reduced-motion. */
+@keyframes tw-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(1.35); }
+}
+.tw-pulse {
+  animation: tw-pulse 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tw-pulse { animation: none; }
+}
+
+/* Cesium ships its own CSS; loaded lazily by components that mount Resium. */

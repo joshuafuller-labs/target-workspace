@@ -1,0 +1,85 @@
+site_name: Target Workspace
+site_description: Configurable kanban for the target lifecycle. CoT-native, plugin-driven, malleable.
+site_url: ""  # private repo; no public hosting until license decision
+docs_dir: docs
+repo_url: https://github.com/joshuafuller-labs/target-workspace
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - toc.follow
+    - content.code.copy
+    - content.code.annotate
+    - search.suggest
+    - search.highlight
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue grey
+      accent: deep orange
+      toggle: { icon: material/brightness-7, name: dark mode }
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue grey
+      accent: deep orange
+      toggle: { icon: material/brightness-4, name: light mode }
+
+markdown_extensions:
+  - admonition
+  - tables
+  - attr_list
+  - md_in_html
+  - footnotes
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+nav:
+  - Home: index.md
+  - Tech stack: tech-stack.md
+  - Foundation: foundation.md
+  - Design:
+      - v0.1: design/v0.1-design.md
+  - Research:
+      - Synthesis: research/SYNTHESIS.md
+      - TAK ecosystem: research/01-tak-ecosystem.md
+      - Commercial defense tech: research/02-commercial-defense-tech.md
+      - Doctrinal tooling: research/03-doctrinal-process-tooling.md
+      - LE / public safety: research/04-le-public-safety.md
+      - AI/CV-to-CoT: research/05-ai-cv-to-cot.md
+  - Personas:
+      - Roster proposal: personas/ROSTER-PROPOSAL.md
+  - ADRs:
+      - "0001 — Record decisions": adr/0001-record-architecture-decisions.md
+      - "0002 — Python/FastAPI": adr/0002-python-fastapi-stack.md
+      - "0003 — React/Vite/Resium": adr/0003-react-vite-resium-stack.md
+      - "0004 — Cesium in MVP": adr/0004-cesium-map-pane-in-mvp.md
+      - "0005 — Plugin entry_points": adr/0005-plugin-system-entry-points.md
+      - "0006 — TDD + supply-chain": adr/0006-tdd-and-supply-chain-bar.md
+      - "0007 — License tabled": adr/0007-license-tabled.md
+      - "0008 — Malleability": adr/0008-malleability-principle.md
+      - "0009 — No FreeTAKServer": adr/0009-no-freetakserver-support.md
+      - "0010 — Demo capability post-MVP": adr/0010-demo-capability-post-mvp.md
+      - "0011 — Responsive design": adr/0011-responsive-design.md
+      - "0012 — Mobile MVP separate scope": adr/0012-mobile-mvp-separate-scope.md
+      - "0013 — API client-agnostic": adr/0013-api-client-agnostic.md
+      - "0014 — ICS scope hybrid MVP": adr/0014-ics-scope-hybrid-mvp.md
+      - "0015 — Multi-org groups in workspace": adr/0015-multi-org-groups-in-workspace.md
+      - "0016 — Federation transport plane": adr/0016-federation-transport-separate-plane.md
+      - "0017 — Cross-board shared identity": adr/0017-cross-board-targets-shared-identity.md
+      - "0018 — Card attachments storage": adr/0018-card-attachments-storage-model.md
+      - "0019 — Effector plugin contract": adr/0019-effector-plugin-contract.md
+      - "0020 — tw_mesh federation": adr/0020-tw-mesh-federation.md
+      - "0021 — Workflow decision pipeline": adr/0021-workflow-decision-pipeline.md
+      - "0022 — Board temporal awareness (timeline)": adr/0022-board-temporal-awareness-timeline.md
+      - "0023 — Tamper-evident audit chain": adr/0023-tamper-evident-audit-chain.md
+      - "0024 — Observation provenance & derived quality": adr/0024-observation-provenance-derived-quality.md
+      - "0025 — CoT detection-metadata extension": adr/0025-cot-detection-metadata-extension.md
+      - "0026 — Federation conflict/merge": adr/0026-federation-conflict-merge.md

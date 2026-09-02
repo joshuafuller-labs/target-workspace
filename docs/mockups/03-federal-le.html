@@ -1,0 +1,755 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Target Workspace — Federal LE / DHS (Mockup)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&family=Source+Sans+3:wght@300;400;500;600;700&family=PT+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #efe9d8;
+    --bg-2: #f5f1e3;
+    --paper: #fdfaf0;
+    --paper-2: #fffcf3;
+    --ink: #14213d;
+    --ink-mid: #3b4a6e;
+    --ink-dim: #6b7589;
+    --ink-faint: #8a9081;
+    --line: #d8d0bd;
+    --line-2: #b8b09a;
+    --gold: #b58c2e;
+    --gold-2: #d9b052;
+    --stamp: #8e2a26;
+    --stamp-2: #b4332e;
+    --ribbon: #d4a73c;
+    --good: #2d6b3f;
+    --warn: #b07a18;
+    --bad: #8e2a26;
+    --shadow: 0 1px 2px rgba(30,20,5,0.05), 0 8px 24px rgba(30,20,5,0.05);
+  }
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Source Sans 3', system-ui, sans-serif;
+    font-feature-settings: 'ss01', 'cv01';
+  }
+  /* paper grain */
+  body::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.15  0 0 0 0 0.10  0 0 0 0 0.05  0 0 0 0.10 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    opacity: 0.4;
+    mix-blend-mode: multiply;
+  }
+  .display { font-family: 'Libre Caslon Text', Georgia, serif; }
+  .mono    { font-family: 'PT Mono', ui-monospace, monospace; }
+  .paper   { background: var(--paper); border: 1px solid var(--line); box-shadow: var(--shadow); }
+  .paper-2 { background: var(--paper-2); border: 1px solid var(--line); }
+  .ink-mid   { color: var(--ink-mid); }
+  .ink-dim   { color: var(--ink-dim); }
+  .ink-faint { color: var(--ink-faint); }
+  .gold      { color: var(--gold); }
+
+  /* Classification banner — stamped look */
+  .stamp-band {
+    background: repeating-linear-gradient(45deg, rgba(142,42,38,0.05) 0 8px, rgba(142,42,38,0.10) 8px 16px);
+    color: var(--stamp); border-top: 2px solid var(--stamp); border-bottom: 2px solid var(--stamp);
+    letter-spacing: 0.32em; font-weight: 700;
+  }
+
+  /* Gold rule */
+  .gold-rule { background: linear-gradient(90deg, transparent, var(--gold) 20%, var(--gold) 80%, transparent); height: 2px; }
+
+  /* Chips */
+  .chip { display:inline-flex; align-items:center; gap:4px; padding:1px 7px; border-radius:0; font-size:10px; font-weight:600; line-height:18px; letter-spacing:0.06em; text-transform: uppercase; font-family:'Source Sans 3', sans-serif; }
+  .chip-dim    { background: #efe9d8; color: var(--ink-mid); border: 1px solid var(--line-2); }
+  .chip-gold   { background: rgba(181,140,46,0.10); color: var(--gold); border: 1px solid var(--gold); }
+  .chip-stamp  { background: rgba(142,42,38,0.10); color: var(--stamp); border: 1px solid var(--stamp); }
+  .chip-good   { background: rgba(45,107,63,0.10); color: var(--good); border: 1px solid var(--good); }
+  .chip-warn   { background: rgba(176,122,24,0.10); color: var(--warn); border: 1px solid var(--warn); }
+
+  /* Stamp text — red, faded, slight rotate */
+  .stamp-text {
+    color: var(--stamp); border: 2px solid var(--stamp); padding: 2px 6px;
+    font-family: 'Libre Caslon Text', serif; font-weight: 700; letter-spacing: 0.08em;
+    transform: rotate(-1.5deg); display: inline-block; font-size: 9px;
+    opacity: 0.85;
+  }
+
+  /* Case folder card */
+  .case {
+    background: linear-gradient(180deg, var(--paper-2), var(--paper));
+    border: 1px solid var(--line);
+    box-shadow: 0 1px 0 var(--line), 0 4px 10px rgba(30,20,5,0.04);
+    position: relative;
+  }
+  .case::before {
+    /* manila tab */
+    content: '';
+    position: absolute; top: -7px; left: 14px; width: 60px; height: 8px;
+    background: linear-gradient(180deg, #e8dbb3, #d9c89b);
+    border: 1px solid var(--line-2); border-bottom: 0;
+    border-radius: 2px 2px 0 0;
+  }
+  .case-num {
+    font-family: 'PT Mono', monospace; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.04em; color: var(--ink);
+  }
+  .case-grid { display: grid; grid-template-columns: 84px 1fr; gap: 4px 8px; font-size: 11.5px; }
+  .case-grid dt { color: var(--ink-faint); letter-spacing: 0.06em; text-transform: uppercase; font-size: 9.5px; padding-top: 2px; font-weight: 600; }
+  .case-grid dd { font-family: 'PT Mono', monospace; color: var(--ink); }
+
+  /* Column head */
+  .col-head { background: linear-gradient(180deg, var(--paper-2), var(--paper)); border: 1px solid var(--line); border-bottom: 0; padding: 8px 12px; }
+  .col-name { font-family: 'Libre Caslon Text', serif; font-weight: 700; font-size: 13px; letter-spacing: 0.08em; }
+  .col-count { font-family: 'PT Mono', monospace; font-size: 11px; color: var(--ink-dim); }
+  .col-body { background: rgba(255,253,243,0.6); border: 1px solid var(--line); border-top: 0; min-height: 60vh; }
+
+  /* Tooltip — old typewriter card */
+  [data-tip] { position: relative; }
+  .tt {
+    position: fixed; z-index: 80; pointer-events: none; max-width: 340px;
+    background: #fffcf0; color: var(--ink);
+    border: 1px solid var(--line-2); border-radius: 1px;
+    padding: 9px 11px; font-size: 12px; line-height: 1.5;
+    box-shadow: 0 12px 32px rgba(20,15,5,0.18);
+    opacity: 0; transform: translateY(2px); transition: opacity 120ms ease, transform 120ms ease;
+    font-family: 'Source Sans 3', sans-serif;
+  }
+  .tt.show { opacity: 1; transform: translateY(0); }
+  .tt .tt-title {
+    font-family: 'Libre Caslon Text', serif; font-weight: 700;
+    color: var(--ink); font-size: 12px; margin-bottom: 4px; letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--line); padding-bottom: 3px;
+  }
+
+  /* Buttons */
+  .btn { display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 12px; border-radius:0; font-size:12px; font-weight:600; border:1px solid var(--line-2); background: var(--paper); color: var(--ink); font-family: 'Source Sans 3', sans-serif; box-shadow: 0 1px 0 var(--line); }
+  .btn:hover { background: #fff8e6; }
+  .btn-primary { background: var(--gold); border-color: var(--gold); color: #fff8e6; font-weight: 700; }
+  .btn-primary:hover { background: var(--gold-2); }
+  .btn-ghost { background: transparent; border-color: var(--line); color: var(--ink-mid); box-shadow: none; }
+  .btn-danger { background: rgba(142,42,38,0.08); border-color: var(--stamp); color: var(--stamp); font-weight: 700; }
+  .btn-good { background: rgba(45,107,63,0.10); border-color: var(--good); color: var(--good); font-weight: 700; }
+  .kbd { display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px; padding:0 4px; border:1px solid var(--line-2); border-bottom-width:2px; border-radius:2px; background:#fff8e6; color:var(--ink-mid); font-family:'PT Mono', monospace; font-size:10px; }
+
+  /* Audit docket */
+  .docket li {
+    border-bottom: 1px dotted var(--line-2);
+    padding: 8px 12px;
+  }
+  .docket li:last-child { border-bottom: 0; }
+  .docket .row { display: flex; gap: 8px; align-items: baseline; }
+  .docket .num { font-family: 'PT Mono', monospace; color: var(--ink-faint); font-size: 11px; min-width: 32px; }
+  .docket .when { font-family: 'PT Mono', monospace; color: var(--ink-faint); font-size: 10.5px; }
+
+  /* Retention timer */
+  .timer {
+    display: inline-flex; align-items: baseline; gap: 4px;
+    font-family: 'PT Mono', monospace; font-weight: 700;
+  }
+
+  /* Map */
+  .lemap {
+    background:
+      radial-gradient(800px 400px at 30% 70%, rgba(181,140,46,0.08), transparent 70%),
+      linear-gradient(rgba(20,33,61,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(20,33,61,0.06) 1px, transparent 1px),
+      var(--paper);
+    background-size: 100% 100%, 14px 14px, 14px 14px;
+    border: 1px solid var(--line-2);
+    position: relative; overflow: hidden;
+  }
+  .lemap .road {
+    position: absolute; height: 2px; background: rgba(20,33,61,0.18); transform-origin: left center;
+  }
+  .lemap .pin { position:absolute; transform:translate(-50%,-50%); }
+  .lemap .pin .dot { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--paper); }
+  .lemap .pin.tgt .dot { background: var(--stamp); }
+  .lemap .pin.cam .dot { background: var(--gold); }
+  .lemap .pin.lpr .dot { background: #4863a8; }
+  .lemap .pin .label { font-family: 'PT Mono', monospace; font-size: 9px; color: var(--ink); margin-top: 2px; white-space: nowrap; }
+
+  /* Seal */
+  .seal {
+    width: 48px; height: 48px; border-radius: 50%; display:grid; place-items:center;
+    background: radial-gradient(circle at 50% 35%, #fff8e6, #efe2bd 60%, #d9c89b);
+    border: 2px solid var(--gold);
+    box-shadow: inset 0 0 0 2px var(--paper), 0 0 0 1px var(--gold-2);
+    font-family: 'Libre Caslon Text', serif; font-weight: 700; color: var(--gold);
+    letter-spacing: 0.05em; font-size: 12px;
+  }
+
+  ::-webkit-scrollbar { width: 12px; }
+  ::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 2px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  .ic { width: 14px; height: 14px; stroke-width: 1.75; }
+  a:focus, button:focus, [tabindex]:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+</style>
+</head>
+<body class="min-h-screen relative">
+
+<div class="stamp-band text-[10px] text-center py-[5px]">FOR OFFICIAL USE ONLY · LAW ENFORCEMENT SENSITIVE · CJIS DATA · DEMONSTRATION</div>
+
+<!-- LETTERHEAD -->
+<header class="relative z-10 px-6 pt-5 pb-3 border-b" style="background: var(--bg-2); border-color: var(--line);">
+  <div class="flex items-start gap-4">
+    <div class="seal">HSI</div>
+    <div class="flex-1">
+      <div class="display text-[11px] text-[color:var(--ink-mid)] tracking-[0.32em] uppercase">U.S. Department of Homeland Security · Homeland Security Investigations</div>
+      <h1 class="display text-[24px] mt-0.5 leading-none">Target Workspace <span class="ink-faint">·</span> <span class="ink-mid">El Paso Field Office</span></h1>
+      <div class="mt-1 flex items-center gap-3 text-[12px] mono ink-dim">
+        <span>OPERATION <span class="text-[color:var(--ink)] font-bold">RIVER WATCH</span></span>
+        <span class="ink-faint">|</span>
+        <span>BORDER SECTOR · EL PASO/JUAREZ</span>
+        <span class="ink-faint">|</span>
+        <span>SAC: K. RAMIREZ · ASAC: J. PORTER</span>
+      </div>
+    </div>
+    <div class="flex flex-col items-end gap-1">
+      <div class="stamp-text">CERTIFIED · 2026-05-16</div>
+      <div class="mono text-[11px] ink-dim">16 MAY 2026 · 15:45 MDT</div>
+    </div>
+  </div>
+
+  <div class="gold-rule mt-4"></div>
+
+  <div class="flex items-center mt-3 gap-2 text-[12.5px]">
+    <a class="px-2 py-0.5 font-bold border-b-2" style="border-color: var(--gold);" href="#">Case Board</a>
+    <a class="px-2 py-0.5 ink-dim hover:text-[color:var(--ink)]" href="#">Subjects</a>
+    <a class="px-2 py-0.5 ink-dim hover:text-[color:var(--ink)]" href="#">Evidence</a>
+    <a class="px-2 py-0.5 ink-dim hover:text-[color:var(--ink)]" href="#">Audit Log</a>
+    <a class="px-2 py-0.5 ink-dim hover:text-[color:var(--ink)]" href="#">FOIA Queue <span class="chip chip-gold ml-1">2</span></a>
+    <a class="px-2 py-0.5 ink-dim hover:text-[color:var(--ink)]" href="#">Retention</a>
+
+    <div class="ml-auto flex items-center gap-2">
+      <button class="btn" data-tip="newcase" data-tip-title="Open new case" data-tip-body="Generates a CJIS-compliant case number, assigns to current agent, opens lead intake form.">
+        New Case
+      </button>
+      <button class="btn" data-tip="search" data-tip-title="Search cases / subjects" data-tip-body="Search across CASE, SUBJECT, VEHICLE, EVIDENCE indexes. Audit-logged.">Search <span class="kbd ml-1">/</span></button>
+      <button class="btn btn-primary" data-tip="publish" data-tip-title="Push selection to TAK"
+              data-tip-body="Emits CoT events for tactical teams (SWAT, USBP). Recorded in audit log with viewer roles enumerated.">
+        Send to TAK
+      </button>
+
+      <div class="ml-2 flex items-center gap-2 pl-3 border-l" style="border-color: var(--line);">
+        <div class="w-8 h-8 rounded-full grid place-items-center text-[11px] font-bold"
+             style="background: #efe2bd; border: 1.5px solid var(--gold); color: var(--ink);">TG</div>
+        <div class="leading-tight">
+          <div class="text-[12.5px] font-semibold">SA T. Garcia</div>
+          <div class="text-[10px] ink-faint mono">HSI EL PASO · BADGE 8842 · CASE LEAD</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- SUB BAR: filters / case context -->
+<div class="relative z-10 px-6 py-2 flex items-center gap-3 text-[12px]" style="background: var(--bg); border-bottom: 1px solid var(--line);">
+  <span class="display text-[11px] ink-mid uppercase tracking-[0.28em]">Filter</span>
+  <button class="btn" data-tip="caseopen" data-tip-title="Open cases only">Open</button>
+  <button class="btn btn-ghost">Closed</button>
+  <button class="btn btn-ghost">Sealed</button>
+  <span class="h-5 w-px border-l" style="border-color: var(--line-2);"></span>
+  <button class="btn btn-ghost">Sources <span class="chip chip-dim ml-1">7</span></button>
+  <button class="btn btn-ghost">Subjects <span class="chip chip-dim ml-1">18</span></button>
+  <button class="btn btn-ghost">Sector: EP/JX</button>
+
+  <div class="ml-auto flex items-center gap-3">
+    <div class="text-[11.5px] mono ink-mid" data-tip="retention" data-tip-title="Retention policy" data-tip-body="CJIS Security Policy v6.0 · 7-year base · longer per AUSA hold.">
+      RETENTION · <span class="font-bold text-[color:var(--ink)]">7 YR</span> base
+    </div>
+    <span class="h-5 w-px border-l" style="border-color: var(--line-2);"></span>
+    <span class="chip chip-gold mono">CJIS 6.0 · AU-5/6/7/8/9</span>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="relative z-10 grid grid-cols-[260px_minmax(0,1fr)_400px] gap-3 px-3 pt-3">
+
+  <!-- LEFT: incoming leads -->
+  <aside class="paper">
+    <div class="px-3 py-2 flex items-center justify-between border-b" style="border-color: var(--line);">
+      <div>
+        <div class="display text-[12px] tracking-[0.16em] uppercase">Incoming · Leads</div>
+        <div class="mono text-[11px] ink-dim">7 sources · 14 new · last 28s</div>
+      </div>
+      <span class="chip chip-gold">LIVE</span>
+    </div>
+
+    <div class="px-3 py-2 flex flex-wrap gap-1 border-b" style="border-color: var(--line);">
+      <span class="chip chip-gold">Flock LPR</span>
+      <span class="chip chip-gold">Fixed CAM</span>
+      <span class="chip chip-gold">Tip Line</span>
+      <span class="chip chip-gold">USBP</span>
+      <span class="chip chip-gold">Fusion</span>
+      <span class="chip chip-gold">OSINT</span>
+      <span class="chip chip-gold">RICA</span>
+    </div>
+
+    <div class="overflow-y-auto" style="max-height: calc(100vh - 320px);">
+
+      <div class="px-3 py-2 cursor-pointer hover:bg-white/40" style="border-bottom: 1px dotted var(--line-2);"
+           data-tip="lead-flock" data-tip-title="Flock LPR · plate hit" data-tip-body="Plate TX 5R3-J92 · BOLO match · I-10 EB MM 23 · cam FL-EP-103">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="chip chip-stamp">LPR HIT</span>
+          <span class="mono text-[10px] ink-faint ml-auto">28s</span>
+        </div>
+        <div class="text-[12.5px] font-semibold">TX 5R3-J92 · BOLO match</div>
+        <div class="mono text-[10.5px] ink-dim mt-0.5">I-10 EB · MM 23 · Flock cam FL-EP-103</div>
+      </div>
+
+      <div class="px-3 py-2 cursor-pointer hover:bg-white/40" style="border-bottom: 1px dotted var(--line-2);"
+           data-tip="lead-tip" data-tip-title="Tip line · anonymous">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="chip chip-gold">TIP</span>
+          <span class="mono text-[10px] ink-faint ml-auto">3m</span>
+        </div>
+        <div class="text-[12.5px] font-semibold">Suspected stash house · 1400 blk Mesa</div>
+        <div class="mono text-[10.5px] ink-dim mt-0.5">caller A2 · prior corr ratio 0.41</div>
+      </div>
+
+      <div class="px-3 py-2 cursor-pointer hover:bg-white/40" style="border-bottom: 1px dotted var(--line-2);"
+           data-tip="lead-cam" data-tip-title="Fixed camera analytic · loitering">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="chip chip-gold">CAM</span>
+          <span class="mono text-[10px] ink-faint ml-auto">11m</span>
+        </div>
+        <div class="text-[12.5px] font-semibold">Subject loitering · Sun Metro stop 32</div>
+        <div class="mono text-[10.5px] ink-dim mt-0.5">analytic 0.73 · matches face DB: pending</div>
+      </div>
+
+      <div class="px-3 py-2 cursor-pointer hover:bg-white/40" style="border-bottom: 1px dotted var(--line-2);"
+           data-tip="lead-usbp" data-tip-title="USBP referral">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="chip chip-gold">USBP</span>
+          <span class="mono text-[10px] ink-faint ml-auto">22m</span>
+        </div>
+        <div class="text-[12.5px] font-semibold">Vehicle of interest · plate TX 8KD-417</div>
+        <div class="mono text-[10.5px] ink-dim mt-0.5">USBP Stn EP/03 · suspected smuggling vector</div>
+      </div>
+
+      <div class="px-3 py-2 cursor-pointer hover:bg-white/40" style="border-bottom: 1px dotted var(--line-2);"
+           data-tip="lead-fusion" data-tip-title="Fusion center referral">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="chip chip-gold">FUSION</span>
+          <span class="mono text-[10px] ink-faint ml-auto">38m</span>
+        </div>
+        <div class="text-[12.5px] font-semibold">RICA correlated · plate to subject 0421</div>
+        <div class="mono text-[10.5px] ink-dim mt-0.5">RISSIntel federated · grade B2</div>
+      </div>
+
+      <div class="px-3 py-2 cursor-pointer hover:bg-white/40" style="border-bottom: 1px dotted var(--line-2);"
+           data-tip="lead-osint" data-tip-title="OSINT · social media">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="chip chip-gold">OSINT</span>
+          <span class="mono text-[10px] ink-faint ml-auto">1h 4m</span>
+        </div>
+        <div class="text-[12.5px] font-semibold">Geo-tagged photo · suspected meet location</div>
+        <div class="mono text-[10.5px] ink-dim mt-0.5">single source · cite REQ · scrubbed</div>
+      </div>
+
+    </div>
+
+    <div class="border-t px-3 py-2 text-[11px]" style="border-color: var(--line);">
+      <div class="flex items-center justify-between">
+        <span class="display ink-mid uppercase text-[10px] tracking-[0.28em]">Policy</span>
+        <span class="mono text-[color:var(--ink)] font-bold">GATED · ALL SOURCES</span>
+      </div>
+      <div class="flex items-center justify-between mt-0.5">
+        <span class="display ink-mid uppercase text-[10px] tracking-[0.28em]">Audit</span>
+        <span class="mono">CJIS AU-5/6/7</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CENTER: case board -->
+  <section>
+    <div class="grid grid-cols-5 gap-3">
+
+      <!-- LEAD -->
+      <div>
+        <div class="col-head flex items-center justify-between" data-tip="c-lead" data-tip-title="LEAD"
+             data-tip-body="Intake column. Tips, LPR hits, referrals land here. No case opened until promoted.">
+          <div>
+            <div class="col-name">LEAD</div>
+            <div class="col-count">stage 01 · 9 leads</div>
+          </div>
+          <span class="chip chip-dim mono">9</span>
+        </div>
+        <div class="col-body p-2 space-y-3">
+
+          <article class="case p-2.5 mt-3" data-tip="case-lead-1" data-tip-title="Lead · vehicle of interest"
+                   data-tip-body="Flock LPR plate hit on BOLO vehicle. Awaiting case-open decision.">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="case-num">L-2026-EP-08144</span>
+              <span class="chip chip-stamp">LPR</span>
+            </div>
+            <div class="text-[12.5px] font-semibold leading-tight">Vehicle of interest · TX 5R3-J92</div>
+            <dl class="case-grid mt-1.5">
+              <dt>Vehicle</dt><dd>2018 GMC Sierra · gry</dd>
+              <dt>LKP</dt><dd>I-10 EB · MM 23</dd>
+              <dt>Source</dt><dd>Flock cam FL-EP-103</dd>
+              <dt>Score</dt><dd>0.94 plate match</dd>
+            </dl>
+            <div class="flex items-center justify-between mt-2 text-[11px]">
+              <span class="ink-faint mono">28s ago</span>
+              <span class="chip chip-warn">BOLO MATCH</span>
+            </div>
+          </article>
+
+          <article class="case p-2.5 mt-4" data-tip="case-lead-2">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="case-num">L-2026-EP-08139</span>
+              <span class="chip chip-dim">TIP</span>
+            </div>
+            <div class="text-[12.5px] font-semibold leading-tight">Stash house · 1400 blk Mesa</div>
+            <dl class="case-grid mt-1.5">
+              <dt>Caller</dt><dd>Anonymous · grade A2</dd>
+              <dt>Address</dt><dd>1400 blk Mesa St</dd>
+              <dt>Prior</dt><dd>0.41 corr · 12 tips</dd>
+            </dl>
+            <div class="flex items-center justify-between mt-2 text-[11px]">
+              <span class="ink-faint mono">3m ago</span>
+              <span class="chip chip-dim">UNVERIFIED</span>
+            </div>
+          </article>
+
+          <article class="case p-2.5 mt-4" data-tip="case-lead-3">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="case-num">L-2026-EP-08129</span>
+              <span class="chip chip-dim">USBP</span>
+            </div>
+            <div class="text-[12.5px] font-semibold leading-tight">Plate TX 8KD-417 · USBP referral</div>
+            <dl class="case-grid mt-1.5">
+              <dt>Vector</dt><dd>EP/03 → I-10 W</dd>
+              <dt>Refer</dt><dd>USBP Stn EP/03</dd>
+            </dl>
+            <div class="flex items-center justify-between mt-2 text-[11px]">
+              <span class="ink-faint mono">22m ago</span>
+              <span class="chip chip-dim">REVIEW</span>
+            </div>
+          </article>
+
+        </div>
+      </div>
+
+      <!-- INVESTIGATE -->
+      <div>
+        <div class="col-head flex items-center justify-between" data-tip="c-invest" data-tip-title="INVESTIGATE"
+             data-tip-body="Cases under workup. Subjects identified, evidence being collected.">
+          <div>
+            <div class="col-name">INVESTIGATE</div>
+            <div class="col-count">stage 02 · 6 open</div>
+          </div>
+          <span class="chip chip-dim mono">6</span>
+        </div>
+        <div class="col-body p-2 space-y-3">
+
+          <article class="case p-2.5 mt-3" data-tip="case-inv-1" data-tip-title="HSI counter-narcotics case"
+                   data-tip-body="Subject identified via face DB · workup in progress · AUSA briefed.">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="case-num">HSI-2026-NRT-04419</span>
+              <span class="chip chip-gold">CASE</span>
+            </div>
+            <div class="text-[12.5px] font-semibold leading-tight">Subject 0421 · MORALES, A.</div>
+            <dl class="case-grid mt-1.5">
+              <dt>Charge</dt><dd>21 USC §841 (S)</dd>
+              <dt>Subjects</dt><dd>1 ID'd · 2 unk</dd>
+              <dt>Evidence</dt><dd>11 items · 3 sealed</dd>
+              <dt>AUSA</dt><dd>S. Brennan · briefed</dd>
+              <dt>Last act</dt><dd>SUR observation 14:08</dd>
+            </dl>
+            <div class="flex items-center justify-between mt-2 text-[11px]">
+              <span class="timer ink-dim"><span>RET</span> <span>6y 11m 22d</span></span>
+              <span class="chip chip-warn">DUAL</span>
+            </div>
+          </article>
+
+          <article class="case p-2.5 mt-4" data-tip="case-inv-2">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="case-num">HSI-2026-NRT-04403</span>
+              <span class="chip chip-gold">CASE</span>
+            </div>
+            <div class="text-[12.5px] font-semibold leading-tight">Vehicle TX 5R3-J92 · workup</div>
+            <dl class="case-grid mt-1.5">
+              <dt>Subjects</dt><dd>0 ID'd · 1 unk</dd>
+              <dt>Evidence</dt><dd>3 LPR tracks</dd>
+              <dt>Days open</dt><dd>4</dd>
+            </dl>
+            <div class="flex items-center justify-between mt-2 text-[11px]">
+              <span class="timer ink-dim"><span>RET</span> <span>6y 11m 26d</span></span>
+              <span class="chip chip-dim">OPEN</span>
+            </div>
+          </article>
+
+        </div>
+      </div>
+
+      <!-- VALIDATE -->
+      <div>
+        <div class="col-head flex items-center justify-between" data-tip="c-val" data-tip-title="VALIDATE"
+             data-tip-body="Corroborated, ready for AUSA review or warrant request.">
+          <div>
+            <div class="col-name">VALIDATE</div>
+            <div class="col-count">stage 03 · 2</div>
+          </div>
+          <span class="chip chip-dim mono">2</span>
+        </div>
+        <div class="col-body p-2 space-y-3">
+
+          <article class="case p-2.5 mt-3" data-tip="case-val-1" data-tip-title="Validated · ready for warrant"
+                   data-tip-body="Corroborated by two independent sources. AUSA reviewing affidavit.">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="case-num">HSI-2026-NRT-04391</span>
+              <span class="chip chip-gold">VALID</span>
+            </div>
+            <div class="text-[12.5px] font-semibold leading-tight">Stash house · 7800 blk Alameda</div>
+            <dl class="case-grid mt-1.5">
+              <dt>Subjects</dt><dd>3 ID'd · 1 unk</dd>
+              <dt>Sources</dt><dd>SUR · CI · LPR (3)</dd>
+              <dt>AUSA</dt><dd>S. Brennan · reviewing</dd>
+              <dt>Warrant</dt><dd>draft v3 · pending</dd>
+            </dl>
+            <div class="flex items-center justify-between mt-2 text-[11px]">
+              <span class="timer ink-dim"><span>RET</span> <span>6y 10m</span></span>
+              <span class="chip chip-good">READY</span>
+            </div>
+            <div class="flex gap-1 mt-2">
+              <button class="btn btn-good text-[11px] flex-1">Promote → Action <span class="kbd ml-1">⇧⏎</span></button>
+            </div>
+          </article>
+
+        </div>
+      </div>
+
+      <!-- ACTION -->
+      <div>
+        <div class="col-head flex items-center justify-between" data-tip="c-act" data-tip-title="ACTION"
+             data-tip-body="Operations in execution. SWAT, USBP, surveillance teams in motion. CoT live to TAK.">
+          <div>
+            <div class="col-name" style="color: var(--stamp);">ACTION</div>
+            <div class="col-count">stage 04 · 1 live</div>
+          </div>
+          <span class="chip chip-stamp mono">LIVE</span>
+        </div>
+        <div class="col-body p-2 space-y-3">
+
+          <article class="case p-2.5 mt-3" data-tip="case-act-1" data-tip-title="In execution"
+                   data-tip-body="SWAT entry team staged. CoT broadcast to 14 EUDs.">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="case-num">HSI-2026-NRT-04388</span>
+              <span class="chip chip-stamp">IN EXEC</span>
+            </div>
+            <div class="text-[12.5px] font-semibold leading-tight">Warrant svc · 2200 blk Texas</div>
+            <dl class="case-grid mt-1.5">
+              <dt>Teams</dt><dd>HSI SRT · EPSO SWAT</dd>
+              <dt>Subjects</dt><dd>2 ID'd</dd>
+              <dt>TAK</dt><dd>broadcast · 14 EUD</dd>
+              <dt>Started</dt><dd>15:30 MDT</dd>
+            </dl>
+            <div class="flex items-center justify-between mt-2 text-[11px]">
+              <span class="ink-faint mono">+ 15 min</span>
+              <span class="chip chip-good">CoT LIVE</span>
+            </div>
+          </article>
+
+        </div>
+      </div>
+
+      <!-- CLOSED -->
+      <div>
+        <div class="col-head flex items-center justify-between" data-tip="c-closed" data-tip-title="CLOSED"
+             data-tip-body="Adjudicated cases. Read-only. Retention timer counts from close date.">
+          <div>
+            <div class="col-name ink-dim">CLOSED</div>
+            <div class="col-count">stage 05</div>
+          </div>
+          <span class="chip chip-dim mono">14</span>
+        </div>
+        <div class="col-body p-2 space-y-3">
+
+          <article class="case p-2.5 mt-3 opacity-90" data-tip="case-cl-1">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="case-num">HSI-2026-NRT-04371</span>
+              <span class="chip chip-dim">CLOSED</span>
+            </div>
+            <div class="text-[12.5px] font-semibold leading-tight">Subject 0418 · arrested</div>
+            <dl class="case-grid mt-1.5">
+              <dt>Disp</dt><dd>Indicted · AUSA filed</dd>
+              <dt>Closed</dt><dd>14 May 2026</dd>
+              <dt>FOIA</dt><dd>prep'd · queued</dd>
+            </dl>
+          </article>
+
+          <article class="case p-2.5 mt-4 opacity-90" data-tip="case-cl-2">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="case-num">HSI-2026-NRT-04359</span>
+              <span class="chip chip-dim">CLOSED</span>
+            </div>
+            <div class="text-[12.5px] font-semibold leading-tight">Vehicle interdiction · plate TX 4HJ-021</div>
+            <dl class="case-grid mt-1.5">
+              <dt>Disp</dt><dd>No charges · cleared</dd>
+              <dt>Closed</dt><dd>09 May 2026</dd>
+            </dl>
+          </article>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- RIGHT: audit + map -->
+  <aside class="space-y-3">
+
+    <!-- AUDIT LOG -->
+    <div class="paper">
+      <div class="px-3 py-2 border-b flex items-center justify-between" style="border-color: var(--line);">
+        <div>
+          <div class="display text-[13px] tracking-[0.12em] uppercase">Audit Docket</div>
+          <div class="mono text-[11px] ink-dim">CJIS AU-5/6/7/8/9 · append-only · sealed</div>
+        </div>
+        <div class="flex items-center gap-1">
+          <button class="btn btn-ghost text-[11px]" data-tip="foia" data-tip-title="FOIA-prep export"
+                  data-tip-body="Generates redacted PDF with viewer log, retention dates, and CJIS attribution metadata.">FOIA Prep</button>
+          <button class="btn btn-ghost text-[11px]">CSV</button>
+        </div>
+      </div>
+      <ul class="docket text-[12px]" style="max-height: 320px; overflow-y: auto;">
+        <li>
+          <div class="row"><span class="num">#4812</span><span class="font-semibold">CASE 04388 → ACTION</span><span class="when ml-auto">15:30:14 MDT</span></div>
+          <div class="ink-mid text-[11px] mt-0.5"><span class="font-semibold">T. Garcia</span> · promoted from VALIDATE · AUSA Brennan acknowledged · 14 EUD broadcast</div>
+        </li>
+        <li>
+          <div class="row"><span class="num">#4811</span><span class="font-semibold">CASE 04391 · WARRANT DRAFT v3</span><span class="when ml-auto">15:22:08 MDT</span></div>
+          <div class="ink-mid text-[11px] mt-0.5"><span class="font-semibold">R. Patel</span> · affidavit revision · attached doc-7723.pdf</div>
+        </li>
+        <li>
+          <div class="row"><span class="num">#4810</span><span class="font-semibold">L-08144 OPENED</span><span class="when ml-auto">15:18:02 MDT</span></div>
+          <div class="ink-mid text-[11px] mt-0.5"><span class="font-semibold">SYSTEM</span> · Flock LPR FL-EP-103 · plate TX 5R3-J92 · BOLO match auto-routed</div>
+        </li>
+        <li>
+          <div class="row"><span class="num">#4809</span><span class="font-semibold">CASE 04419 · EVIDENCE LOG</span><span class="when ml-auto">14:08:41 MDT</span></div>
+          <div class="ink-mid text-[11px] mt-0.5"><span class="font-semibold">T. Garcia</span> · added SUR observation note · chain of custody #11</div>
+        </li>
+        <li>
+          <div class="row"><span class="num">#4808</span><span class="font-semibold">CASE 04403 · VIEWER</span><span class="when ml-auto">13:55:09 MDT</span></div>
+          <div class="ink-mid text-[11px] mt-0.5"><span class="font-semibold">D. Estrada</span> · accessed (read) · purpose: cross-case dedupe</div>
+        </li>
+        <li>
+          <div class="row"><span class="num">#4807</span><span class="font-semibold">CASE 04371 · CLOSED → FOIA</span><span class="when ml-auto">11:14:20 MDT</span></div>
+          <div class="ink-mid text-[11px] mt-0.5"><span class="font-semibold">K. Ramirez</span> · case closed · routed to FOIA prep queue</div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- MAP -->
+    <div class="paper">
+      <div class="px-3 py-2 border-b flex items-center justify-between" style="border-color: var(--line);">
+        <div class="display text-[13px] tracking-[0.12em] uppercase">Sector Map · EP/JX</div>
+        <div class="flex items-center gap-1">
+          <button class="btn btn-ghost text-[11px]">LPR</button>
+          <button class="btn btn-ghost text-[11px]">CAM</button>
+          <button class="btn btn-ghost text-[11px]">CASES</button>
+        </div>
+      </div>
+      <div class="lemap" style="height: 230px;">
+        <div class="road" style="top: 30%; left: 0;  width: 100%; transform: rotate(-4deg);"></div>
+        <div class="road" style="top: 60%; left: 0;  width: 100%; transform: rotate(2deg);"></div>
+        <div class="road" style="top: 0;   left: 22%; width: 2px; height: 100%; background: rgba(20,33,61,0.18);"></div>
+        <div class="road" style="top: 0;   left: 72%; width: 2px; height: 100%; background: rgba(20,33,61,0.18);"></div>
+
+        <div class="pin lpr" style="top: 30%; left: 18%;"><div class="dot"></div><div class="label">FL-EP-103</div></div>
+        <div class="pin lpr" style="top: 60%; left: 64%;"><div class="dot"></div><div class="label">FL-EP-088</div></div>
+        <div class="pin cam" style="top: 44%; left: 38%;"><div class="dot"></div><div class="label">CAM-12</div></div>
+        <div class="pin tgt" style="top: 50%; left: 50%;"><div class="dot"></div><div class="label">CASE 04388</div></div>
+        <div class="pin tgt" style="top: 32%; left: 70%;"><div class="dot"></div><div class="label">CASE 04419</div></div>
+        <div class="pin tgt" style="top: 70%; left: 24%;"><div class="dot"></div><div class="label">CASE 04391</div></div>
+
+        <div class="absolute bottom-2 left-2 mono text-[10px] ink-dim">EP/JX · 1:25K</div>
+      </div>
+    </div>
+
+    <!-- FOIA / Retention -->
+    <div class="paper">
+      <div class="px-3 py-2 border-b flex items-center justify-between" style="border-color: var(--line);">
+        <div class="display text-[13px] tracking-[0.12em] uppercase">FOIA &amp; Retention</div>
+        <span class="chip chip-gold">CJIS 6.0</span>
+      </div>
+      <div class="p-3 grid grid-cols-2 gap-3 text-[12px]">
+        <div>
+          <div class="display ink-mid uppercase text-[10px] tracking-[0.28em]">FOIA queue</div>
+          <div class="mt-1 font-bold mono">2 pending</div>
+          <div class="ink-dim text-[11px]">oldest 9 days · SLA 20</div>
+        </div>
+        <div>
+          <div class="display ink-mid uppercase text-[10px] tracking-[0.28em]">Retention exp</div>
+          <div class="mt-1 font-bold mono">11 cases</div>
+          <div class="ink-dim text-[11px]">within 90 days · auto-tagged</div>
+        </div>
+        <div>
+          <div class="display ink-mid uppercase text-[10px] tracking-[0.28em]">Seal pending</div>
+          <div class="mt-1 font-bold mono">3 cases</div>
+          <div class="ink-dim text-[11px]">court-sealed · awaiting EO</div>
+        </div>
+        <div>
+          <div class="display ink-mid uppercase text-[10px] tracking-[0.28em]">Viewer access</div>
+          <div class="mt-1 font-bold mono">182 today</div>
+          <div class="ink-dim text-[11px]">all logged · reason captured</div>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+</main>
+
+<!-- Footer -->
+<footer class="relative z-10 mt-3 px-6 py-3 flex items-center gap-4 text-[11px] mono border-t" style="background: var(--bg-2); border-color: var(--line);">
+  <span><span class="font-bold">TAK Server</span> · tak.hsi.gov:8089 · 14 EUD</span>
+  <span class="opacity-50">|</span>
+  <span>Audit · <span class="font-bold">sealed append-only</span> · 4,812 events / 24h</span>
+  <span class="opacity-50">|</span>
+  <span>FedRAMP · <span class="font-bold">MODERATE</span> · CJIS · v6.0</span>
+  <span class="ml-auto display ink-faint uppercase text-[10px] tracking-[0.28em]">Target Workspace · 0.1.0 mockup</span>
+</footer>
+
+<div class="stamp-band text-[10px] text-center py-[5px] mt-1">FOR OFFICIAL USE ONLY · LAW ENFORCEMENT SENSITIVE · CJIS DATA · DEMONSTRATION</div>
+
+<div id="tt" class="tt" role="tooltip"></div>
+<script>
+(() => {
+  const tt = document.getElementById('tt');
+  let active = null;
+  const show = (el) => {
+    active = el;
+    const title = el.getAttribute('data-tip-title') || '';
+    const body  = el.getAttribute('data-tip-body')  || '';
+    tt.innerHTML = (title?`<div class="tt-title">${title}</div>`:'') + (body?`<div>${body}</div>`:'');
+    tt.classList.add('show'); position(el);
+  };
+  const hide = () => { tt.classList.remove('show'); active=null; };
+  const position = (el) => {
+    const r = el.getBoundingClientRect(); const ttr = tt.getBoundingClientRect();
+    let x = r.left + r.width/2 - ttr.width/2;
+    let y = r.bottom + 8;
+    if (y + ttr.height > window.innerHeight - 8) y = r.top - ttr.height - 8;
+    x = Math.max(8, Math.min(x, window.innerWidth - ttr.width - 8));
+    tt.style.left = x+'px'; tt.style.top = y+'px';
+  };
+  document.querySelectorAll('[data-tip]').forEach(el => {
+    el.addEventListener('mouseenter', () => show(el));
+    el.addEventListener('mouseleave', hide);
+    el.addEventListener('focus', () => show(el));
+    el.addEventListener('blur', hide);
+  });
+  window.addEventListener('scroll', () => { if (active) position(active); }, true);
+  window.addEventListener('resize', () => { if (active) position(active); });
+})();
+</script>
+</body>
+</html>

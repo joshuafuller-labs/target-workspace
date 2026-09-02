@@ -1,0 +1,53 @@
+# Target Workspace — hobby / demo compose.
+#
+# One command:    docker compose -f docker/docker-compose.yml up --build
+# Open:           http://localhost:8000   (or :8000 on your LAN IP)
+# Login:          admin@example.com / demopw
+#
+# Single container, SQLite on a named volume, all four bundled demo
+# scenarios pre-seeded at boot. No external dependencies.
+#
+# Override with docker-compose.prod.yml for the production stack
+# (Postgres + PostGIS, TLS terminator, scaled replicas).
+
+services:
+  app:
+    image: target-workspace:dev
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: tw-app
+    ports:
+      # Bind on every interface so the LAN can reach the demo. Localhost-
+      # only deployments should change this to 127.0.0.1:8000:8000.
+      - "8000:8000"
+    environment:
+      TW_ENV: "dev"
+      TW_DATABASE_URL: "sqlite:////data/workspace.db"
+      TW_LOG_FORMAT: "console"
+      TW_ADMIN_EMAIL: "admin@example.com"
+      TW_ADMIN_PASSWORD: "demopw"
+      # Seed every bundled scenario on first boot. Empty disables seeding.
+      TW_DEMO_SCENARIOS: "tf-dagger-f3ead,le-counter-narco,sar-missing-hiker,disaster-relief-hurricane,disaster-kerr-flood"
+      # Generate a fresh session secret per stack run. Override in a .env
+      # file (or your secrets store) for any non-throwaway deployment.
+      TW_SESSION_SECRET: "${TW_SESSION_SECRET:-demo-secret-replace-me-in-prod-please-this-is-long-enough}"
+    volumes:
+      - tw-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3).read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  tw-data:
