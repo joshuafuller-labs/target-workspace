@@ -37,7 +37,7 @@ RUN apt-get update \
 # ---------------------------------------------------------------------------
 # Base image digest-pinned (node:24-alpine as of 2026-05-23); Dependabot's docker
 # ecosystem maintains the digest under the 5-day cooldown.
-FROM node:24-alpine@sha256:9a2c6269f83d74af45665c0b738b78c7b5f07bf2374c72a4c540065a975b9693 AS frontend-build
+FROM node:26-alpine@sha256:2d984a15c9b54fd0aeb608b8e0d0d83529eb34d2966db27a1fb4f1edc3d298a3 AS frontend-build
 
 WORKDIR /frontend
 
